@@ -9,7 +9,17 @@
 
 selectWindow("ADD.tif");
 run("Morphological Segmentation");
-selectWindow("Morphological Segmentation");
+selectWindow("Morphological Segmentation"); // Activates the window with the title "Morphological Segmentation".
 wait(1000);
 showText("Please, wait for a lot of min! \n did you have convert your stack to 8 bit  ?");
-call("inra.ijpb.plugins.MorphologicalSegmentation.segment", "tolerance=10.0", "calculateDams=true", "connectivity=6");
+call("inra.ijpb.plugins.MorphologicalSegmentation.segment", "tolerance=10.0", "calculateDams=true", "connectivity=6"); // Appele une méthode statique 
+//publique dans une classe Java, passant un nombre arbitraire d'arguments de chaîne et renvoyant une chaîne.
+
+
+
+
+getInfo("log") //Returns the contents of the Log window, or "" if the Log window is not open.
+	if "Whole" in log
+	run("Close"); // Use run("Close") to close non-image windows.
+
+
