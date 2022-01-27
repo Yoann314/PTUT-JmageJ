@@ -14,18 +14,15 @@ function Morpho_Seg(){
 	showText("Please, wait for a lot of min! \n did you have convert your stack to 8 bit  ?");
 	call("inra.ijpb.plugins.MorphologicalSegmentation.segment", "tolerance=10.0", "calculateDams=true", "connectivity=6"); // Appele une méthode statique 
 	// passant un nombre arbitraire d'arguments de chaîne et renvoyant une chaîne.
-	fin_phase_1 = 1
-	while (fin_phase_1 == 1) {
+	log_index = -1;
+	i = 0;
+	while (log_index == -1) {
 		cont_log = getInfo("log"); //Returns the contents of the Log window, or "" if the Log window is not open.
+		wait(2000);
 		log_index = cont_log.indexOf("Whole");
-		if(log_index != - 1) {
-			print("################ 1 #################");
-			close("log");
-			close("Untitled");
-			fin_phase_1 = 2;s
-		}
+		print(i++);
 	}
-	print("################ 2 #################");
+	print("##### fini #####");
 	//if (fin_phase_1 = 1){
 		//print("appeller la phase suivante");
 	//}
