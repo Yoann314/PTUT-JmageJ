@@ -16,6 +16,7 @@ function Phase1(){
 	rename("ADD.tif");
 	selectWindow(name);
 	close();
+	showText("### phase 1 terminée ###");
 }
 
 function Phase2(){
@@ -23,7 +24,6 @@ function Phase2(){
 	run("Morphological Segmentation");
 	selectWindow("Morphological Segmentation"); // Activates the window with the title "Morphological Segmentation".
 	wait(1000);
-	showText("Please, wait for a lot of min! \n did you have convert your stack to 8 bit  ?");
 	call("inra.ijpb.plugins.MorphologicalSegmentation.segment", "tolerance=10.0", "calculateDams=true", "connectivity=6"); // Appele une méthode statique 
 	// passant un nombre arbitraire d'arguments de chaîne et renvoyant une chaîne.
 	log_index = -1;
@@ -36,6 +36,9 @@ function Phase2(){
 	//if (fin_phase_1 = 1){
 		//print("appeller la phase suivante");
 	//}
+	showText("### phase 2 terminée ###");
+	wait(3000);
+	close("Untilted");
 }
 
 function Phase3(){
@@ -46,9 +49,15 @@ function Phase3(){
 	wait(2000);
 	call("inra.ijpb.plugins.MorphologicalSegmentation.createResultImage");
 	wait(2000);
+	selectWindow("Morphological Segmentation");
+	close();
+	showText("### phase 3 terminée ###");
+	wait(3000);
+	close("Untilted");
 }
 
 function Phase4(){
+	selectWindow("ADD-catchment-basins.tif");
 	run("Options...", "iterations=1 count=1 black do=Nothing");
 	run("Set Measurements...", "area centroid perimeter shape stack limit redirect=None decimal=3");
 	run("Duplicate...", "title=mask duplicate");
@@ -67,10 +76,14 @@ function Phase4(){
 	close();
 	selectWindow("mask");
 	close();
+	showText("### phase 4 terminée ###");
+	wait(3000);
+	close("Untilted");
 }
 
 function Phase5(){
-	showMessage("l'image acquise sur canal 561 nm doit etre ouverte-marquage avec les ARNs et les contours");
+	selectWindow("561.tif");
+	run("Duplicate...", "title=561.tif duplicate");
 	p=30;
 	getDimensions(width, height, channels, slices, frames);
 	setSlice((floor(slices/2)));
@@ -88,9 +101,14 @@ function Phase5(){
 	//Make stack from image named with "Maxima"
 	run("Images to Stack", "method=[Copy (center)] name=Stack title=Maxima use");
 	run("Options...", "iterations=1 count=1 black do=Dilate stack");
+	showText("### phase 5 terminée ###");
+	wait(3000);
+	close("Untilted");
 }
 
 function Phase6(){
+
+	selectWindow("Stack");
 	if(isOpen("Results")){
 		selectWindow("Results");
 		run("Close");
@@ -111,10 +129,13 @@ function Phase6(){
 	close();
 	selectWindow("Centroids map of origine");
 	close();
+	showText("### phase 6 terminée ###");
+	wait(3000);
+	close("Untilted");
 }
 
 function Phase7(){
-	selectWindow("bassin-filtered.tif");
+	selectWindow("bassin-filtered");
 	for (row = 0; row < nResults; row++) {
 		x=floor(getResult("X", row));
 		y=floor(getResult("Y", row));
@@ -133,27 +154,28 @@ function Phase7(){
 	}
 	indexOfCell=Array.getSequence(n);
 	Array.show(indexOfCell,SpotInCellsCount);
-
+	showText("### phase 7 terminée ###");
 }
 
 function Poissons_zebre(){
-	Phase1()
-	Print("Fin Phase 1")
-	Phase2()
-	Print("Fin Phase 2")
-	Phase3()
-	Print("Fin Phase 3")
-	Phase4()
-	Print("Fin Phase 4")
-	Phase5()
-	Print("Fin Phase 5")
-	Phase6()
-	Print("Fin Phase 6")
-	Phase7()
-	Print("Fin Phase 7")
+	
+
+	Phase1();
+	
+	Phase2();
+	
+	Phase3();
+	
+	Phase4();
+	
+	Phase5();
+	
+	Phase6();
+	
+	Phase7();
 }
 
-Poissons_zebre()
+Poissons_zebre();
 
 
 
