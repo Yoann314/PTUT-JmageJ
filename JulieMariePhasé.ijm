@@ -136,10 +136,24 @@ function Phase7(){
 
 }
 
+function Poissons_zebre(){
+	Phase1()
+	Print("Fin Phase 1")
+	Phase2()
+	Print("Fin Phase 2")
+	Phase3()
+	Print("Fin Phase 3")
+	Phase4()
+	Print("Fin Phase 4")
+	Phase5()
+	Print("Fin Phase 5")
+	Phase6()
+	Print("Fin Phase 6")
+	Phase7()
+	Print("Fin Phase 7")
+}
 
-
-
-
+Poissons_zebre()
 
 
 
