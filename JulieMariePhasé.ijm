@@ -7,14 +7,16 @@
 //temps d'exécution ~30 min pour 1003x1433x334 images 16 bits
 //ver1.0
 
+Poissons_zebre();
+
 function Phase1(){
-	name=getTitle();
-	run("Duplicate...", "title=488 duplicate");
+	selectWindow("488.tif");
+	run("Duplicate...", "title=488.tif duplicate");
 	run("Gaussian Blur...", "sigma=1 stack");
 	run("Subtract Background...", "rolling=50 stack");
 	run("Anisotropic Anomalous Diffusion 2D Filter", "apply anomalous=1.0000 condutance=15.0000 time=0.1250 number=5 edge=Exponential");
 	rename("ADD.tif");
-	selectWindow(name);
+	selectWindow("488.tif");
 	close();
 }
 
@@ -23,7 +25,6 @@ function Phase2(){
 	run("Morphological Segmentation");
 	selectWindow("Morphological Segmentation"); // Activates the window with the title "Morphological Segmentation".
 	wait(1000);
-	showText("Please, wait for a lot of min! \n did you have convert your stack to 8 bit  ?");
 	call("inra.ijpb.plugins.MorphologicalSegmentation.segment", "tolerance=10.0", "calculateDams=true", "connectivity=6"); // Appele une méthode statique 
 	// passant un nombre arbitraire d'arguments de chaîne et renvoyant une chaîne.
 	log_index = -1;
@@ -32,10 +33,6 @@ function Phase2(){
 		wait(2000);
 		log_index = cont_log.indexOf("Whole");
 	}
-	print("##### fini #####");
-	//if (fin_phase_1 = 1){
-		//print("appeller la phase suivante");
-	//}
 }
 
 function Phase3(){
@@ -46,9 +43,12 @@ function Phase3(){
 	wait(2000);
 	call("inra.ijpb.plugins.MorphologicalSegmentation.createResultImage");
 	wait(2000);
+	selectWindow("Morphological Segmentation");
+	close();
 }
 
 function Phase4(){
+	selectWindow("ADD-catchment-basins.tif");
 	run("Options...", "iterations=1 count=1 black do=Nothing");
 	run("Set Measurements...", "area centroid perimeter shape stack limit redirect=None decimal=3");
 	run("Duplicate...", "title=mask duplicate");
@@ -61,13 +61,14 @@ function Phase4(){
 	run("16-bit");
 	run("Multiply...", "value=400.000 stack");
 	imageCalculator("AND create stack", "Mask of mask","ADD-catchment-basins.tif");
-	rename("bassin-filtered");
+	rename("bassin-filtered.tif");
 	//clean
 	selectWindow("Mask of mask");
 	close();
 	selectWindow("mask");
 	close();
 }
+
 
 function Phase5(){
 	showMessage("l'image acquise sur canal 561 nm doit etre ouverte-marquage avec les ARNs et les contours");
@@ -133,27 +134,25 @@ function Phase7(){
 	}
 	indexOfCell=Array.getSequence(n);
 	Array.show(indexOfCell,SpotInCellsCount);
-
 }
 
 function Poissons_zebre(){
-	Phase1()
-	Print("Fin Phase 1")
-	Phase2()
-	Print("Fin Phase 2")
-	Phase3()
-	Print("Fin Phase 3")
-	Phase4()
-	Print("Fin Phase 4")
-	Phase5()
-	Print("Fin Phase 5")
-	Phase6()
-	Print("Fin Phase 6")
-	Phase7()
-	Print("Fin Phase 7")
+	print("#### Début Phase 1 ####");
+	Phase1();
+	print("#### Phase 1 terminée ####");	
+	Phase2();
+	print("#### Phase 2 terminée ####");	
+	Phase3();
+	print("#### Phase 3 terminée ####");	
+	Phase4();
+	print("#### Phase 4 terminée ####");	
+	Phase5();
+	print("#### Phase 5 terminée ####");	
+	Phase6();
+	print("#### Phase 6 terminée ####");
+	Phase7();
+	print("#### Phase 7 terminée ####");
 }
-
-Poissons_zebre()
 
 
 
