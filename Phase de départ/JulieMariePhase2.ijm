@@ -11,5 +11,4 @@ selectWindow("ADD.tif");
 run("Morphological Segmentation");
 selectWindow("Morphological Segmentation");
 wait(1000);
-showText("Please, wait for a lot of min! \n did you have convert your stack to 8 bit  ?");
 call("inra.ijpb.plugins.MorphologicalSegmentation.segment", "tolerance=10.0", "calculateDams=true", "connectivity=6");
