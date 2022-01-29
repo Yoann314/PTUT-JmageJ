@@ -16,7 +16,7 @@ function Phase1(){
 	rename("ADD.tif");
 	selectWindow(name);
 	close();
-	showText("### phase 1 terminée ###");
+	print("### phase 1 terminée ###");
 }
 
 function Phase2(){
@@ -32,13 +32,7 @@ function Phase2(){
 		wait(2000);
 		log_index = cont_log.indexOf("Whole");
 	}
-	print("##### fini #####");
-	//if (fin_phase_1 = 1){
-		//print("appeller la phase suivante");
-	//}
-	showText("### phase 2 terminée ###");
-	wait(3000);
-	close("Untilted");
+	print("### phase 2 terminée ###");
 }
 
 function Phase3(){
@@ -51,9 +45,8 @@ function Phase3(){
 	wait(2000);
 	selectWindow("Morphological Segmentation");
 	close();
-	showText("### phase 3 terminée ###");
-	wait(3000);
-	close("Untilted");
+	print("### phase 3 terminée ###");
+
 }
 
 function Phase4(){
@@ -76,14 +69,11 @@ function Phase4(){
 	close();
 	selectWindow("mask");
 	close();
-	showText("### phase 4 terminée ###");
-	wait(3000);
-	close("Untilted");
-}
+	print("### phase 4 terminée ###");
+
 
 function Phase5(){
 	selectWindow("561.tif");
-	run("Duplicate...", "title=561.tif duplicate");
 	p=30;
 	getDimensions(width, height, channels, slices, frames);
 	setSlice((floor(slices/2)));
@@ -101,10 +91,7 @@ function Phase5(){
 	//Make stack from image named with "Maxima"
 	run("Images to Stack", "method=[Copy (center)] name=Stack title=Maxima use");
 	run("Options...", "iterations=1 count=1 black do=Dilate stack");
-	showText("### phase 5 terminée ###");
-	wait(3000);
-	close("Untilted");
-}
+	print("### phase 5 terminée ###");
 
 function Phase6(){
 
@@ -129,9 +116,8 @@ function Phase6(){
 	close();
 	selectWindow("Centroids map of origine");
 	close();
-	showText("### phase 6 terminée ###");
-	wait(3000);
-	close("Untilted");
+	print("### phase 6 terminée ###");
+
 }
 
 function Phase7(){
@@ -154,7 +140,7 @@ function Phase7(){
 	}
 	indexOfCell=Array.getSequence(n);
 	Array.show(indexOfCell,SpotInCellsCount);
-	showText("### phase 7 terminée ###");
+	print("### phase 7 terminée ###");
 }
 
 function Poissons_zebre(){
@@ -176,8 +162,6 @@ function Poissons_zebre(){
 }
 
 Poissons_zebre();
-
-
 
 
 
