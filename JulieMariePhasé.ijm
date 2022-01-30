@@ -11,7 +11,6 @@ Poissons_zebre();
 
 function Phase1(){
 	selectWindow("488.tif");
-	run("Duplicate...", "title=488.tif duplicate");
 	run("Gaussian Blur...", "sigma=1 stack");
 	run("Subtract Background...", "rolling=50 stack");
 	run("Anisotropic Anomalous Diffusion 2D Filter", "apply anomalous=1.0000 condutance=15.0000 time=0.1250 number=5 edge=Exponential");
