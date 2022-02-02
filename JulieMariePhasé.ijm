@@ -72,6 +72,13 @@ function Phase4(){
 
 
 function Phase5(){
+
+	//prominence p can be change in  function of image quality
+	//Macro qui execute un find Maxima pour toutes les images d'un stack
+	//Il s'agit de l'ancienne macro :"Finddaxima-dilateOnStack.ijm "
+	//in: ouvrir l'image acquise sur canal 561 nm qui contient, outre les contours, mais les dots a repérer.
+	//out : image stack des dots nommée: "Stack" en binaire
+
 	// showMessage("l'image acquise sur canal 561 nm doit etre ouverte-marquage avec les ARNs et les contours");
 	selectWindow("561.tif");
 	p = 30;
@@ -94,13 +101,19 @@ function Phase5(){
 }
 
 function Phase6(){
+
+	//utilise la methode 3D object counter de Fabrice Cordelière 
+	//this macro will find all centroid in 3D, and display a Results tab with they coordonnates
+	//in: image named "Stack.tif" of dilated maximas get from phase 5
+	//out: Results tab with maximas coordonates
+	
 	selectWindow("Stack.tif");
 	rename("origine");
 	run("Set Scale...", "distance=0 known=0 unit=pixel");
 	run("3D Objects Counter", "threshold=128 slice=48 min.=3 max.=64995840 centroids");
 	selectWindow("Centroids map of origine");
-	setThreshold(1, 65534);
-	setOption("BlackBackground", true);
+	setThreshold(1, 65534); // Définit les niveaux de seuil inférieur et supérieur.
+	setOption("BlackBackground", true); // Active/désactive l'option "Fond noir".
 	run("Convert to Mask", "method=Default background=Dark black");
 	run("Set Measurements...", "centroid stack redirect=None decimal=3");
 	run("Analyze Particles...", "display clear stack");
@@ -113,8 +126,14 @@ function Phase6(){
 }
 
 function Phase7(){
+
+	//Scan Results tab and add a column with the Cell label for each X,Y position
+	//in: 	image stack "bassin-filtered" : stack of cell in gray level labeled and size filtered (from phase 4)
+	//		Results tab with X,Y coordonates and Slice position
+	//out : index of Cell number and count of spots in each Cell label
+
 	selectWindow("bassin-filtered.tif");
-	for (row = 0; row < nResults; row++) {
+	for (row = 0; row < nResults; row++){
 		x=floor(getResult("X", row));
 		y=floor(getResult("Y", row));
 		setSlice(floor(getResult("Slice", row)));
