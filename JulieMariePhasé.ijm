@@ -37,11 +37,7 @@ function Phase2(){
 function Phase3(){
 	selectWindow("Morphological Segmentation");
 	call("inra.ijpb.plugins.MorphologicalSegmentation.setDisplayFormat", "Catchment basins");
-	wait(2000);
-	//selectWindow("ADD-catchment-basins.tif");
-	wait(2000);
 	call("inra.ijpb.plugins.MorphologicalSegmentation.createResultImage");
-	wait(2000);
 	selectWindow("Morphological Segmentation");
 	close();
 }
@@ -129,7 +125,7 @@ function Phase7(){
 
 	//Scan Results tab and add a column with the Cell label for each X,Y position
 	//in: 	image stack "bassin-filtered" : stack of cell in gray level labeled and size filtered (from phase 4)
-	//		Results tab with X,Y coordonates and Slice position
+	//		"Results" tab with X,Y coordonates and Slice position
 	//out : index of Cell number and count of spots in each Cell label
 
 	selectWindow("bassin-filtered.tif");
@@ -175,9 +171,5 @@ function Poissons_zebre(){
 	Phase7();
 	print("#### Phase 7 terminée ####");
 }
-
-
-
-run("Merge Channels...");
 
 
