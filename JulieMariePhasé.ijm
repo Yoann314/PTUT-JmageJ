@@ -147,7 +147,8 @@ function Poissons_zebre(){
 	print("#### Phase 3 terminée ####");
 	print("#### Début Phase 4 ####");	
 	Phase4();
-	print("#### Phase 4 terminée ####");	
+	print("#### Phase 4 terminée ####");
+	print("#### Début Phase 5 ####");
 	Phase5();
 	print("#### Phase 5 terminée ####");	
 	Phase6();
@@ -158,6 +159,6 @@ function Poissons_zebre(){
 
 
 
-
+run("Merge Channels...");
 
 
