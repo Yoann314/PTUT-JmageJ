@@ -89,12 +89,12 @@ function Phase5(){
 		run("Find Maxima...", "prominence="+p+" output=[Single Points]");
 		}
 	//Make stack from image named with "Maxima"
-	run("Images to Stack", "method=[Copy (center)] name=Stack title=Maxima use"); // Images to Stack
+	run("Images to Stack", "method=[Copy (center)] name=Stack.tif title=Maxima use"); // Images to Stack
 	run("Options...", "iterations=1 count=1 black do=Dilate stack");
 }
 
 function Phase6(){
-	selectWindow("Stack");
+	selectWindow("Stack.tif");
 	rename("origine");
 	run("Set Scale...", "distance=0 known=0 unit=pixel");
 	run("3D Objects Counter", "threshold=128 slice=48 min.=3 max.=64995840 centroids");
