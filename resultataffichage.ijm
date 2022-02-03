@@ -4,10 +4,12 @@ SpotInCellsCount=newArray(nResults); //créer une array pour chaque colonne, ext
 CellValue=newArray(nResults);
 x=newArray(nResults);
 y=newArray(nResults);
+slice=newArray(nResults);
 Array.fill(SpotInCellsCount,1);
 Table.sort("CellNumber"); //trie de table results pour pouvoir obtenir les sommes cumulées dans SpotInCellsCount
 
 for (i = 0; i < nResults ; i++) {
+	slice[i]=getResult("Slice", i);
 	CellValue[i]=getResult("CellNumber", i); //extraction des numéros des cellules dans array CellValue
 	x[i]= getResult("X", i); //coordonnée x et y des spots
 	y[i]= getResult("Y", i); 
@@ -22,5 +24,5 @@ for (i = 0; i < nResults ; i++) {
 	}
 }
 
-Array.show("Results",CellValue,x,y,SpotInCellsCount); //affichage des arrays dans results (écrase les donnés qui etaient de base dans results)
+Array.show("Results",CellValue,x,y,slice,SpotInCellsCount); //affichage des arrays dans results (écrase les donnés qui etaient de base dans results)
 run("Read and Write Excel"); //importe la table results sous fichier excel déposé dans desktop de l'ordinateur (plugins à ajouter sur imageJ)
