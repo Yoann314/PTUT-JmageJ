@@ -131,19 +131,20 @@ function Phase7(){
 		y=floor(getResult("Y", row));
 		setSlice(floor(getResult("Slice", row)));
 		setResult("CellNumber", row, getPixel(x, y));
+		// a la fin nResult = 665
 	}
 	
 	//This part count for each cell the number of dots included
-	SpotInCellsCount=newArray(nResults);
-	n=SpotInCellsCount.length;
-	Array.fill(SpotInCellsCount,0);
+	SpotInCellsCount = newArray(nResults);
+	n = SpotInCellsCount.length;
+	Array.fill(SpotInCellsCount,0); // initialisation du tableau à 0 (pour les 665 lignes)
 	
-	for (row = 0; row < n; row++) {
-		a=getResult("CellNumber", row);
+	for (row = 0; row < n; row++) { // compte le nombre de point/CellNumber
+		a = getResult("CellNumber", row);
 		SpotInCellsCount[a]++;
 	}
-	indexOfCell=Array.getSequence(n);
-	Array.show(indexOfCell,SpotInCellsCount);
+	indexOfCell = Array.getSequence(n);
+	Array.show("Nombre de Spot / cellule",indexOfCell,SpotInCellsCount);
 	// if macro erreur fenètre ouverte --> afficher un message qui explique l'erreur (c'est dû aux mauvais résultats)
 }
 
@@ -173,3 +174,4 @@ function Poissons_zebre(){
 // rajout d'une lut
 
 
+newArray(nResults);
