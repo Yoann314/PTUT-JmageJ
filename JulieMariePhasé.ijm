@@ -1,15 +1,12 @@
-//phase 1 du worflow JulieMarie
-//il y a 7 phases
-//in : image avec le signal des contours ouverte (488 nm)
-//attention le contraste doit etre suffisament elevé fond autour de NG=10
-//utiliser image adjust contrast si necessaire
-//out: meme stack filtré
-//temps d'exécution ~30 min pour 1003x1433x334 images 16 bits
-//ver1.0
-
 Poissons_zebre();
 
 function Phase1(){
+
+	//in : image avec le signal des contours ouverte (488 nm)
+	//attention le contraste doit etre suffisament elevé fond autour de NG=10
+	//utiliser image adjust contrast si necessaire
+	//out: meme stack filtré
+
 	selectWindow("488.tif");
 	run("Gaussian Blur...", "sigma=1 stack");
 	run("Subtract Background...", "rolling=50 stack");
@@ -171,5 +168,8 @@ function Poissons_zebre(){
 	Phase7();
 	print("#### Phase 7 terminée ####");
 }
+
+// rajout des X/Ycell
+// rajout d'une lut
 
 

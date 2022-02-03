@@ -1,4 +1,3 @@
-
 selectWindow("Results");
 
 SpotInCellsCount=newArray(nResults); //créer une array pour chaque colonne, extrait les données de table results dans chaque array
@@ -25,8 +24,3 @@ for (i = 0; i < nResults ; i++) {
 
 Array.show("Results",CellValue,x,y,SpotInCellsCount); //affichage des arrays dans results (écrase les donnés qui etaient de base dans results)
 run("Read and Write Excel"); //importe la table results sous fichier excel déposé dans desktop de l'ordinateur (plugins à ajouter sur imageJ)
-
-
-
-
-
