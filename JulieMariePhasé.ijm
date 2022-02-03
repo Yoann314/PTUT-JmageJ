@@ -125,7 +125,7 @@ function Phase6(){
 	setOption("BlackBackground", true); // Active/désactive l'option "Fond noir".
 	run("Convert to Mask", "method=Default background=Dark black");
 	run("Set Measurements...", "centroid stack redirect=None decimal=3");
-	run("Analyze Particles...", "display clear stack");
+	run("Analyze Particles...", "pixel display clear stack"); // le tabeau Results aces les coordonée des spots (en pixel)
 	
 	//clean
 	selectWindow("origine");
@@ -190,4 +190,3 @@ function Poissons_zebre(){
 // rajout d'une lut
 
 
-newArray(nResults);
