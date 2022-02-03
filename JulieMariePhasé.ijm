@@ -17,6 +17,11 @@ function Phase1(){
 }
 
 function Phase2(){
+
+	//in : image avec le signal des contours fitres par la macro phase1 (normalement son nom est : ADD
+	//out:  MorpholibJ-Morphological Segmentation plugin ouvert en attente de l'extraction des bassins (macro phase 3)
+	//le mieux est de travailler en 8 bit apres avoir modifié le contraste
+	
 	selectWindow("ADD.tif");
 	run("Morphological Segmentation");
 	selectWindow("Morphological Segmentation"); // Activates the window with the title "Morphological Segmentation".
@@ -32,6 +37,12 @@ function Phase2(){
 }
 
 function Phase3(){
+
+	//apres calcul et extraction des bassins, cette phase extrait l'image stack des bassins
+	//extration depuis le plugin : MorpholibJ-Morphological Segmentation.
+	//in : MorpholibJ-Morphological Segmentation doit etre en attente
+	//out : stack des bassins nommée : "ADD-catchment-basins.tif"
+	
 	selectWindow("Morphological Segmentation");
 	call("inra.ijpb.plugins.MorphologicalSegmentation.setDisplayFormat", "Catchment basins");
 	call("inra.ijpb.plugins.MorphologicalSegmentation.createResultImage");
@@ -40,6 +51,12 @@ function Phase3(){
 }
 
 function Phase4(){
+
+	//Filtrage des cellules en fonction de leur surface,
+	//les cellules de moins de 200 pixels sont retirées
+	//in: image "ADD-catchment-basins" 32 bits issue de macro phase 3
+	//out : image "bassin-filtered" 16 bits
+
 	selectWindow("ADD-catchment-basins.tif");
 	run("Options...", "iterations=1 count=1 black do=Nothing");
 	run("Set Measurements...", "area centroid perimeter shape stack limit redirect=None decimal=3");
@@ -127,8 +144,8 @@ function Phase7(){
 
 	selectWindow("bassin-filtered.tif");
 	for (row = 0; row < nResults; row++){
-		x=floor(getResult("X", row));
-		y=floor(getResult("Y", row));
+		x = floor(getResult("X", row));
+		y = floor(getResult("Y", row));
 		setSlice(floor(getResult("Slice", row)));
 		setResult("CellNumber", row, getPixel(x, y));
 		// a la fin nResult = 665
