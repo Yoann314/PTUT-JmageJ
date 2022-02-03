@@ -80,7 +80,6 @@ function Phase4(){
 	close();
 }
 
-
 function Phase5(){
 
 	//prominence p can be change in  function of image quality
