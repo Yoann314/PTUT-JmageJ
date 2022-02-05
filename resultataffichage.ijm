@@ -18,11 +18,11 @@ for (i = 0; i < nResults ; i++) {
 		SpotInCellsCount[i]="NaN";
 	}
 	if(SpotInCellsCount[i]!="NaN"){ //comptage des spot contenus dans chaque cellule, le comptage final se trouve dans la derniere ligne avec la valeur CellValue d'origine(à améliorer)
-		if (CellValue[i] == CellValue[i-1]) {
-			SpotInCellsCount[i]=SpotInCellsCount[i-1]+1;
-		}
+		selectWindow("Nombre de Spot / cellule");
+		j=Table.get("SpotInCellsCount", CellValue[i]);
+		selectWindow("Results");
+		SpotInCellsCount[i]=j;
 	}
 }
 
 Array.show("Results",CellValue,x,y,slice,SpotInCellsCount); //affichage des arrays dans results (écrase les donnés qui etaient de base dans results)
-run("Read and Write Excel"); //importe la table results sous fichier excel déposé dans desktop de l'ordinateur (plugins à ajouter sur imageJ)
