@@ -1,5 +1,5 @@
 
-
+//il manque des ligne pour fermer les images une fois que la fonction poisson zebre est executée, sauvegarder la result table dans le dossier correspondant.
 //création d'une boite de dialogue qui explique la structure requise pour que le programme fonctionne.
 Dialog.create("Conditions d'utilisation :");
 Dialog.addMessage("    -Veuillez créer un dossier pour chaque embryon dans lequel se trouvera 3 dossiers pour chaque stade.(T1,T2 et T3) \n \n    -Dans chaque dossier stade, doit se trouver l'image 488 et l'image 561. Ainsi, il ne doit contenir que 2 éléments (488 et 561) \n \nPar exemple : \nEmbryon1/T1/488             ...pour l'embryon 1 au stade 1.");
