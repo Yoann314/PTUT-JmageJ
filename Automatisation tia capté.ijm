@@ -15,7 +15,7 @@ embryon=getFileList(chemin_embryon);	// récupération de la liste des dossier e
 stade=getFileList(chemin_stade);		//par exemple dans embryon si on a que 2 embryons, array.show(embryon) retourne EMBRYON 1/
 																											//			EMBRYON 2/
 
-Array.sort(stade);			//trie la liste des embryon au cas où il serait dans le désordre
+Array.sort(stade);			//trie la liste des embryons au cas où il seraientt dans le désordre
 Array.sort(embryon);
 
 l=lengthOf(embryon);		//nombre d'embryons
@@ -38,6 +38,8 @@ for (i=0;i<l;i++){
 			open(image+nb[1]);
 
 			open(image+nb[0]);	//ouverture de 488 en dernier
+
+			close("*");		//fermeture des images une fois le programme exécuté
 			
 			//appeler la fonction poisson zebre puis fermer les images
 
