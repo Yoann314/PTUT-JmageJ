@@ -28,7 +28,7 @@ for (i=0;i<l;i++){
 		chemin_image=replace(chemin_stade+stade[j], "/", "\\");		 //chemin_image = C:\Users\nd202\Desktop\TEST\EMBRYON [i]\T[j]\
 		
 		image=replace(chemin_image, "\\", "\\\\");			//image = C:\\Users\\nd202\\Desktop\\TEST\\EMBRYON [i]\\T[j]\\
-															//utilisation de double anti slash car sinon pour de specialiser le caractère '\' (sinon open() ne fonctionne pas)
+															//utilisation de double anti slash pour déspecialiser le caractère '\' (sinon open() ne fonctionne pas)
 		
 		nb=getFileList(image);		//nb contient le nom des fichiers images
 
@@ -39,10 +39,11 @@ for (i=0;i<l;i++){
 
 			open(image+nb[0]);	//ouverture de 488 en dernier
 
-			close("*");		//fermeture des images une fois le programme exécuté
-			
 			//appeler la fonction poisson zebre puis fermer les images
 
+			Table.save(image); //sauvrgarde de la result table dans le repertoire associé (il faut fermer le tableau array.csv dans la fonction
+
+			close("*");		//fermeture des images une fois le programme exécuté
 		}
 		else {
 			showMessage("Le repertoire contenant les images doit contenir seulement 488 et 561 !");
@@ -50,5 +51,6 @@ for (i=0;i<l;i++){
 	}
 }
 
-
+//pour l'instant, l'inconvénient de ce programme s'executer deux fois sur un meme ensemblde de repertoire a cause la boucle if (nb==2) car les resulttable se sauvegarde dans le repertoire image dpnc nb ==3
+// --> à modifier
 
