@@ -4,8 +4,6 @@ nombre_ligne = Table.size;
 title = "[Progress]";
 run("Text Window...", "name="+ title +" width=30 height=3 monospaced");
 run("Add...", "value=1 stack"); // on ajoute +1 à toutes les valleurs de pixel pour éviter d'en avoir un noir. 
-selectWindow("561.tif");
-snapshot();
 
 for (row = 0; row < nombre_ligne; row++){
 
