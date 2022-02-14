@@ -15,11 +15,11 @@ Array.sort(stade);			//trie la liste des embryons au cas où il seraientt dans l
 Array.sort(embryon);
 
 l=lengthOf(embryon);		//nombre d'embryons
-for (i=0;i<l;i++){	
+for (i=0;i<l;i++) {	
 	
 	chemin_stade=chemin_embryon+"\\"+embryon[i];	//chemin_stade = chemin pour accéder au stade pour chaque embryons
 	
-	for (j=0;j<3;j++){
+	for (j=0;j<3;j++) {
 													
 		chemin_image=replace(chemin_stade+stade[j], "/", "\\");		 //chemin_image = C:\Users\nd202\Desktop\TEST\EMBRYON [i]\T[j]\
 		
@@ -54,7 +54,7 @@ for (i=0;i<l;i++){
 
 
 
-function Phase1(){
+function Phase1() {
 
 	//in : image avec le signal des contours ouverte (488 nm)
 	//attention le contraste doit etre suffisament elevé fond autour de NG=10
@@ -71,7 +71,7 @@ function Phase1(){
 	close();
 }
 
-function Phase2(){
+function Phase2() {
 
 	//in : image avec le signal des contours fitres par la macro phase1 (normalement son nom est : ADD
 	//out:  MorpholibJ-Morphological Segmentation plugin ouvert en attente de l'extraction des bassins (macro phase 3)
@@ -80,17 +80,18 @@ function Phase2(){
 	selectWindow("ADD.tif");
 	run("Morphological Segmentation");
 	selectWindow("Morphological Segmentation"); // Activates the window with the title "Morphological Segmentation".
-	call("inra.ijpb.plugins.MorphologicalSegmentation.segment", "tolerance=10.0", "calculateDams=true", "connectivity=6"); // Appele une méthode statique 
-	// passant un nombre arbitraire d'arguments de chaîne et renvoyant une chaîne.
+	call("inra.ijpb.plugins.MorphologicalSegmentation.segment", "tolerance=10.0", "calculateDams=true", "connectivity=6");
+	
 	log_index = -1;
 	while (log_index == -1) {
 		cont_log = getInfo("log"); //Returns the contents of the Log window, or "" if the Log window is not open.
 		wait(2000);
 		log_index = cont_log.indexOf("Whole");
 	}
+	
 }
 
-function Phase3(){
+function Phase3() {
 
 	//apres calcul et extraction des bassins, cette phase extrait l'image stack des bassins
 	//extration depuis le plugin : MorpholibJ-Morphological Segmentation.
@@ -104,7 +105,7 @@ function Phase3(){
 	close();
 }
 
-function Phase4(){
+function Phase4() {
 
 	//Filtrage des cellules en fonction de leur surface,
 	//les cellules de moins de 200 pixels sont retirées
@@ -125,19 +126,18 @@ function Phase4(){
 	run("Multiply...", "value=400.000 stack");
 	imageCalculator("AND create stack", "Mask of mask","ADD-catchment-basins.tif");
 	rename("bassin-filtered.tif");
-	//clean
-	selectWindow("Mask of mask");
-	close();
-	selectWindow("mask");
-	close();
-	selectWindow("ADD-catchment-basins.tif");
-	close();
+	close("\\Others"); // ferme tout sauf bassin-filtered.tif
 
-	selectWindow("bassin-filtered.tif");
 	run("Analyze Regions 3D", "volume centroid surface_area_method=[Crofton (13 dirs.)] euler_connectivity=6");
+	Table.rename("bassin-filtered-morpho", "Results_1.csv"); // Renames a table.
+	Table.showRowNumbers(true);
+	Table.renameColumn("Centroid.X", "X_Centroid"); // Renames a column.
+	Table.renameColumn("Centroid.Y", "Y_Centroid"); // Renames a column.
+	Table.renameColumn("Centroid.Z", "Z_Centroid"); // Renames a column.
+	//Table.renameColumn("Label", "Cell_Value"); // Renames a column. marche pas pour aucune raison
 }
 
-function Phase5(){
+function Phase5() {
 
 	//prominence p can be change in  function of image quality
 	//Macro qui execute un find Maxima pour toutes les images d'un stack
@@ -156,7 +156,7 @@ function Phase5(){
 	
 	n = nSlices; // Returns the number of images in the current stack.
 	name = getTitle();
-	for(i=1;i<=n;i++){
+	for(i = 1; i <= n; i++) {
 		selectWindow(name);
 		setSlice(i); // Affiche la iième tranche de la pile active.
 		run("Find Maxima...", "prominence="+p+" output=[Single Points]");
@@ -168,7 +168,7 @@ function Phase5(){
 	close();
 }
 
-function Phase6(){
+function Phase6() {
 
 	//utilise la methode 3D object counter de Fabrice Cordelière 
 	//this macro will find all centroid in 3D, and display a Results tab with they coordonnates
@@ -185,33 +185,55 @@ function Phase6(){
 	run("Convert to Mask", "method=Default background=Dark black");
 	run("Set Measurements...", "centroid stack redirect=None decimal=3");
 	run("Analyze Particles...", "pixel display clear stack"); // le tabeau Results aces les coordonée des spots (en pixel)
-	
-	//clean
-	selectWindow("origine");
-	close();
-	selectWindow("Centroids map of origine");
-	close();
+	selectWindow("bassin-filtered.tif");
+	close("\\Others");
 }
 
-function Mesure_intensite(){
+function Phase7() {
+
+	//Scan Results tab and add a column with the Cell label for each X,Y position
+	//in  : image stack "bassin-filtered" : stack of cell in gray level labeled and size filtered (from phase 4)
+	//		"Results" tab with X,Y coordonates and Slice position
+	//out : index of Cell number and count of spots in each Cell label
+	
+	selectWindow("bassin-filtered.tif");
+	for (row = 0; row < nResults; row++) {
+		x = floor(getResult("X", row));
+		y = floor(getResult("Y", row));
+		setSlice(floor(getResult("Slice", row)));
+		setResult("CellNumber", row, getPixel(x, y));
+	}
+	
+	//This part count for each cell the number of dots included
+	SpotInCellsCount = newArray(nResults);
+	n = SpotInCellsCount.length;
+	Array.fill(SpotInCellsCount,0); // initialisation du tableau à 0 (pour les 665 lignes)
+	
+	for (row = 0; row < n; row++) { // compte le nombre de point/CellNumber
+		a = getResult("CellNumber", row);
+		SpotInCellsCount[a]++;
+	}
+	indexOfCell = Array.getSequence(n);
+	Array.show("Nombre de Spot / cellule",indexOfCell,SpotInCellsCount);
+	Table.rename("Results", "Results_2.csv");
+	close("*");
+	// if macro erreur fenètre ouverte --> afficher un message qui explique l'erreur (c'est dû aux mauvais résultats)
+}
+
+function Mesure_intensite() {
 
 	// mettre la description de la fonction
 	//in  :
 	//out :
 
 	open(tif_561); // reouvre l'image original sans la filtre apliquer a la phase 5
-	selectWindow("Results");
-	Table.rename("Results", "Results_complet");
+	selectWindow("Results_2.csv");
 	nombre_ligne = Table.size;
-	title = "[Progress]";
-	run("Text Window...", "name="+ title +" width=30 height=3 monospaced");
 	run("Add...", "value=1 stack"); // on ajoute +1 à toutes les valleurs de pixel pour éviter d'en avoir un noir. 
 	
-	for (row = 0; row < nombre_ligne; row++){
-	
-		print(title, "\\Update:"+floor(row/nombre_ligne*100)+"/"+100+" ("+(floor(row/nombre_ligne*10000))/100+"%)\n"+getBar(row, nombre_ligne));
+	for (row = 0; row < nombre_ligne; row++) {
 		
-		selectWindow("Results_complet");
+		selectWindow("Results_2.csv");
 		// prend les valeurs  dans les colonne X, Y et Z (Slice) à la ligne row
 		x = Table.get("X", row);
 		y = Table.get("Y", row);
@@ -234,91 +256,192 @@ function Mesure_intensite(){
 				run("Set Measurements...", "mean integrated limit redirect=None decimal=3");
 				run("Measure");
 				Valeur_intensite = getResult("Mean", Table.getSelectionEnd); //Table.getSelectionEnd - Returns the index of the last selected row in the current table, or -1 if there is no selection. 
-				selectWindow("Results_complet");
+				selectWindow("Results_2.csv");
 				Table.set("Intensity", row, Valeur_intensite); // rajoute la valeur intensité au tableau
 				setForegroundColor(0, 0, 0); 
 				run("Fill", "slice"); // marque le spot mesurer en noir (0,0,0)
 			}
 			
-			if (valeur_pixel_cible == 0){ // si = de 0 --> on à déjà compté ce spot
-				selectWindow("Results_complet");
+			if (valeur_pixel_cible == 0) { // si = de 0 --> on à déjà compté ce spot
+				selectWindow("Results_2.csv");
 				Table.set("Intensity", row, NaN);
 			}
 		}
 
-		if (Spot_in_cell == 0){
-			selectWindow("Results_complet");
+		if (Spot_in_cell == 0) {
+			selectWindow("Results_2.csv");
 			Table.set("Intensity", row, NaN);
 		}
 	}
-	
-	print(title, "\\Close");
+	close();
+	close("Results");
+	selectWindow("Results_2.csv");
+	Table.renameColumn("X", "X_Cluster"); // Renames a column.
+	Table.renameColumn("Y", "Y_Cluster"); // Renames a column.
+	Table.renameColumn("Slice", "Z_Cluster"); // Renames a column.
 }
 
-function Phase7(){
-
-	//Scan Results tab and add a column with the Cell label for each X,Y position
-	//in  : image stack "bassin-filtered" : stack of cell in gray level labeled and size filtered (from phase 4)
-	//		"Results" tab with X,Y coordonates and Slice position
-	//out : index of Cell number and count of spots in each Cell label
-
-	selectWindow("bassin-filtered.tif");
-	for (row = 0; row < nResults; row++){
-		x = floor(getResult("X", row));
-		y = floor(getResult("Y", row));
-		setSlice(floor(getResult("Slice", row)));
-		setResult("CellNumber", row, getPixel(x, y));
-		// a la fin nResult = 665
-	}
-	
-	//This part count for each cell the number of dots included
-	SpotInCellsCount = newArray(nResults);
-	n = SpotInCellsCount.length;
-	Array.fill(SpotInCellsCount,0); // initialisation du tableau à 0 (pour les 665 lignes)
-	
-	for (row = 0; row < n; row++) { // compte le nombre de point/CellNumber
-		a = getResult("CellNumber", row);
-		SpotInCellsCount[a]++;
-	}
-	indexOfCell = Array.getSequence(n);
-	Array.show("Nombre de Spot / cellule",indexOfCell,SpotInCellsCount);
-	// if macro erreur fenètre ouverte --> afficher un message qui explique l'erreur (c'est dû aux mauvais résultats)
-}
-
-function Concatenation_Resultat(){
+function Concatenation_Resultat() {
 
 	// mettre la description de la fonction
 	//in  :
 	//out :
 	
-	selectWindow("Results");
-	SpotInCellsCount=newArray(nResults); //créer une array pour chaque colonne, extrait les données de table results dans chaque array
-	CellValue=newArray(nResults);
-	x=newArray(nResults);
-	y=newArray(nResults);
-	slice=newArray(nResults);
-	Array.fill(SpotInCellsCount,1);
+	selectWindow("Results_2.csv");
+	nb_ligne_2 = Table.size;
+	
+	// création des listes
+	SpotInCellsCount 	= newArray(nb_ligne_2); //créer une array pour chaque colonne, extrait les données de table results dans chaque array
+	Cell_Value 			= newArray(nb_ligne_2);
+	Intensity			= newArray(nb_ligne_2);
+	X_Cluster 			= newArray(nb_ligne_2);
+	Y_Cluster 			= newArray(nb_ligne_2);
+	Z_Cluster 			= newArray(nb_ligne_2);
+	
 	Table.sort("CellNumber"); //trie de table results pour pouvoir obtenir les sommes cumulées dans SpotInCellsCount
 	
-	for (i = 0; i < nResults ; i++) {
-		slice[i]=getResult("Slice", i);
-		CellValue[i]=getResult("CellNumber", i); //extraction des numéros des cellules dans array CellValue
-		x[i]= getResult("X", i); //coordonnée x et y des spots
-		y[i]= getResult("Y", i); 
-		
-		if(CellValue[i]==0){ // les spot dans la cellule de valeur 0 ne sont pas utilisés (à modifier peut etre)
-			SpotInCellsCount[i]="NaN";
+	for (row = 0; row < nb_ligne_2 ; row++) {
+		Cell_Value[row] = Table.get("CellNumber", row); //extraction des numéros des cellules dans array CellValue
+		Intensity[row] = Table.get("Intensity", row);
+		X_Cluster[row] = Table.get("X_Cluster", row); //coordonnée x, y et z des spots
+		Y_Cluster[row] = Table.get("Y_Cluster", row); 
+		Z_Cluster[row] = Table.get("Z_Cluster", row);
+	
+	
+	
+		if(Cell_Value[row] == 0) { // les spot dans la cellule de valeur 0 ne sont pas utilisés (à modifier peut etre)
+			SpotInCellsCount[row] = "NaN";
 		}
-		if(SpotInCellsCount[i]!="NaN"){ //comptage des spot contenus dans chaque cellule, le comptage final se trouve dans la derniere ligne avec la valeur CellValue d'origine(à améliorer)
+		////////// optimiser ca avec des listes
+		/*
+		if(SpotInCellsCount[row] != "NaN") { //comptage des spot contenus dans chaque cellule, le comptage final se trouve dans la derniere ligne avec la valeur CellValue d'origine(à améliorer)
 			selectWindow("Nombre de Spot / cellule");
-			j=Table.get("SpotInCellsCount", CellValue[i]);
-			selectWindow("Results");
-			SpotInCellsCount[i]=j;
+			j = Table.get("SpotInCellsCount", Cell_Value[row]);
+			selectWindow("Results_2.csv");
+			SpotInCellsCount[row] = j;
 		}
+		*/
+	}
+	// pour compter le nombre de cellules qui n'ont pas de cluster
+	selectWindow("Results_1.csv");
+	Table.sort("Label");
+	nb_ligne_1 = Table.size;
+	Label 		= newArray(nb_ligne_1);
+	// création des listes temporaire pour accélérer le calcul et ne pas lire dans les tableaux
+	Volumet 	= newArray(nb_ligne_1);
+	X_Centroidt = newArray(nb_ligne_1);
+	Y_Centroidt = newArray(nb_ligne_1);
+	Z_Centroidt = newArray(nb_ligne_1);
+	
+	for (row = 0; row < nb_ligne_1 ; row++) {
+		Label[row] 			= Table.get("Label", row);
+		Volumet[row]		= Table.get("Volume", row); //créer une array pour chaque colonne, extrait les données de table results dans chaque array
+		X_Centroidt[row]	= Table.get("X_Centroid", row);
+		Y_Centroidt[row]	= Table.get("Y_Centroid", row);
+		Z_Centroidt[row]	= Table.get("Z_Centroid", row);
 	}
 	
-	Array.show("Results",CellValue,x,y,slice,SpotInCellsCount); //affichage des arrays dans results (écrase les donnés qui etaient de base dans results)
-	//ajouter la macro macrolut8bit quand elle sera terminée
+	nb_diff = 0;
+	diff = 0;
+	count = 0;
+	for (row = 0; row < nb_ligne_1 ; row++) {
+		l = Label[row];
+		for (row1 = 0; row1 < nb_ligne_2 ; row1++) {
+			k = Cell_Value[row1];
+			if (k != l) {
+				diff = 1;
+			}
+			if (k == l) {
+				count = 1;
+			}
+		}
+		if (diff != count) {
+			cellule_sans_cluster += 1;
+		}
+		diff = 0;
+		count = 0;
+	}
+	//Array.show("rien du tout c'est de la merde",Label,Volumet,Cell_Value);// juste pour voir sur quoi tu travail
+	/////////////////// debut concaténation du tableau 1
+
+
+	Volume 		= newArray(nb_ligne_2);
+	X_Centroid 	= newArray(nb_ligne_2);
+	Y_Centroid 	= newArray(nb_ligne_2);
+	Z_Centroid 	= newArray(nb_ligne_2);
+	compteur = cellule_sans_cluster + nb_ligne_2 
+	
+	l = Label[0];
+	j_en_ai_mare = 0
+	for (row = 0; row < compteur ; row++) {
+		k = Cell_Value[row];
+		if (k == 0) { // si on est pas dans une cellule
+			Volume[row]		= "NaN";
+			X_Centroid[row]	= "NaN";
+			Y_Centroid[row]	= "NaN";
+			Z_Centroid[row]	= "NaN";
+		}
+	Array.show("rien du tout c'est de la merde2",X_Centroid,Y_Centroid,Z_Centroid,Volume,Cell_Value);
+
+		if (k != 0) { // si on est dans une cellule
+			if (k == l) { // k=l ou k≠l
+				l = Label[j_en_ai_mare+1];
+				Volume[row]		= Volumet[j_en_ai_mare];
+				X_Centroid[row]	= X_Centroidt[j_en_ai_mare];
+				Y_Centroid[row]	= Y_Centroidt[j_en_ai_mare];
+				Z_Centroid[row]	= Z_Centroidt[j_en_ai_mare];
+				j_en_ai_mare += 1;
+			}
+			
+			if (k != l) {
+				l = Label[j_en_ai_mare+1];
+				Volume[row]		= Volumet[j_en_ai_mare];
+				X_Centroid[row]	= X_Centroidt[j_en_ai_mare];
+				Y_Centroid[row]	= Y_Centroidt[j_en_ai_mare];
+				Z_Centroid[row]	= Z_Centroidt[j_en_ai_mare];
+				j_en_ai_mare += 1;
+				
+			}
+		}
+	}
+
+
+
+
+
+
+
+
+	
+	Array.show("Results_Finished_2",Volume,X_Centroid,Y_Centroid,Z_Centroid);
+	Array.show("Results_Finished_1.csv",Cell_Value,X_Cluster,Y_Cluster,Z_Cluster,Intensity,SpotInCellsCount);
+
+selectWindow("Results_Finished_1.csv");
+nombre_ligne_1 = Table.size;
+for (row = 0; row < nombre_ligne_1 ; row++) {
+	selectWindow("Results_1.csv");
+	l = Table.get("Label", row);
+	for (row_1 = 0; row_1 < nombre_ligne_1 ; row_1++) {
+		selectWindow("Results_Finished_1.csv");
+		k = Table.get("Cell_Value", row_1);
+			if (k !=0 && k 
+			count = 
+	}
+
+}
+
+
+
+
+// Table.deleteRows(firstIndex, lastIndex) - Supprime les lignes spécifiées.
+// pour supprimer les ligne ou les spots ne sont pas dans les cellules ? poser la question a Julie.
+
+
+
+
+Table.renameColumn("CellValue", "Cell_Value"); // Renames a column.
+Table.rename("Results_1.csv", "bassin-filtered-morpho"); // Renames a table.
+Table.setColumn(columnName, array); // Assigns an array to the specified column.
 }
 
 
@@ -331,27 +454,7 @@ function Poissons_zebre(){
 	Phase4();
 	Phase5();
 	Phase6();
-	Mesure_intensite();
 	Phase7();
+	Mesure_intensite();
 	Concatenation_Resultat();
 }
-
-
-
-
-
-
-
-
-
-
-// faire la meme chose pour tous le programme
-function getBar(p1, p2){
-	    n = 20;
-	    bar1 = "--------------------";
-	    bar2 = "********************";
-	    index = round(n*(p1/p2));
-	    if (index<1) index = 1;
-	    if (index>n-1) index = n-1;
-	    return substring(bar2, 0, index) + substring(bar1, index+1, n);
-	}
