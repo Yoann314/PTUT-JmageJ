@@ -3,8 +3,6 @@ Dialog.create("Conditions d'utilisation :");
 Dialog.addMessage("    -Veuillez créer un dossier pour chaque embryon dans lequel se trouvera 3 dossiers pour chaque stade.(T1,T2 et T3) \n \n    -Dans chaque dossier stade, doit se trouver l'image 488 et l'image 561. Ainsi, il ne doit contenir que 2 éléments (488 et 561) \n \nPar exemple : \nEmbryon1/T1/488             ...pour l'embryon 1 au stade 1.");
 Dialog.show();
 
-
-
 repertoire_image=getDir("Veuillez séléctionner le repertoire contenant les images"); 	//récupération du chemin menant au repertoire des image, ex: C:\Users\nd202\Desktop\TEST\EMBRYON 1\T1\
 chemin_stade=File.getParent(repertoire_image);  //récupération des repertoire contenant les différent stades et embryons
 chemin_embryon=File.getParent(chemin_stade);
@@ -34,8 +32,10 @@ for (i=0;i<l;i++){
 		if (lengthOf(nb) == 2) {  // par précaution, il faut qu'il y ait seulement les images 488 et 561 dans le dossier 
 			
 			open(image+nb[1]);
+			tif_561 = getTitle();
 
 			open(image+nb[0]);//ouverture de 488 en dernier
+			tif_488 = getTitle();
 
 			Poissons_zebre();
 
@@ -62,11 +62,12 @@ function Phase1(){
 	//out: meme stack filtré
 
 	selectWindow("488.tif");
+	// selectWindow(tif_488); // pour le programme final
 	run("Gaussian Blur...", "sigma=1 stack");
 	run("Subtract Background...", "rolling=50 stack");
 	run("Anisotropic Anomalous Diffusion 2D Filter", "apply anomalous=1.0000 condutance=15.0000 time=0.1250 number=5 edge=Exponential");
 	rename("ADD.tif");
-	selectWindow("488.tif");
+	selectWindow(tif_488);
 	close();
 }
 
@@ -79,7 +80,6 @@ function Phase2(){
 	selectWindow("ADD.tif");
 	run("Morphological Segmentation");
 	selectWindow("Morphological Segmentation"); // Activates the window with the title "Morphological Segmentation".
-	wait(1000);
 	call("inra.ijpb.plugins.MorphologicalSegmentation.segment", "tolerance=10.0", "calculateDams=true", "connectivity=6"); // Appele une méthode statique 
 	// passant un nombre arbitraire d'arguments de chaîne et renvoyant une chaîne.
 	log_index = -1;
@@ -109,7 +109,7 @@ function Phase4(){
 	//Filtrage des cellules en fonction de leur surface,
 	//les cellules de moins de 200 pixels sont retirées
 	//in: image "ADD-catchment-basins" 32 bits issue de macro phase 3
-	//out : image "bassin-filtered" 16 bits
+	//out : image "bassin-filtered" 16 bits et rableau des coordonnée des centroïdes des cellules et leur volume
 
 	selectWindow("ADD-catchment-basins.tif");
 	run("Options...", "iterations=1 count=1 black do=Nothing");
@@ -132,6 +132,9 @@ function Phase4(){
 	close();
 	selectWindow("ADD-catchment-basins.tif");
 	close();
+
+	selectWindow("bassin-filtered.tif");
+	run("Analyze Regions 3D", "volume centroid surface_area_method=[Crofton (13 dirs.)] euler_connectivity=6");
 }
 
 function Phase5(){
@@ -142,8 +145,8 @@ function Phase5(){
 	//in: ouvrir l'image acquise sur canal 561 nm qui contient, outre les contours, mais les dots a repérer.
 	//out : image stack des dots nommée: "Stack" en binaire
 
-	// showMessage("l'image acquise sur canal 561 nm doit etre ouverte-marquage avec les ARNs et les contours");
 	selectWindow("561.tif");
+	// selectWindow(tif_561); // pour le programme final
 	p = 30;
 	getDimensions(width, height, channels, slices, frames); // Returns the dimensions of the current image.
 	setSlice((floor(slices/2))); // Affiche la nième tranche/slices de la pile active (celle du milieu ici).
@@ -161,6 +164,8 @@ function Phase5(){
 	//Make stack from image named with "Maxima"
 	run("Images to Stack", "method=[Copy (center)] name=Stack.tif title=Maxima use"); // Images to Stack
 	run("Options...", "iterations=1 count=1 black do=Dilate stack");
+	selectWindow("561.tif");
+	close();
 }
 
 function Phase6(){
@@ -188,10 +193,72 @@ function Phase6(){
 	close();
 }
 
+function Mesure_intensite(){
+
+	// mettre la description de la fonction
+	//in  :
+	//out :
+
+	open(tif_561); // reouvre l'image original sans la filtre apliquer a la phase 5
+	selectWindow("Results");
+	Table.rename("Results", "Results_complet");
+	nombre_ligne = Table.size;
+	title = "[Progress]";
+	run("Text Window...", "name="+ title +" width=30 height=3 monospaced");
+	run("Add...", "value=1 stack"); // on ajoute +1 à toutes les valleurs de pixel pour éviter d'en avoir un noir. 
+	
+	for (row = 0; row < nombre_ligne; row++){
+	
+		print(title, "\\Update:"+floor(row/nombre_ligne*100)+"/"+100+" ("+(floor(row/nombre_ligne*10000))/100+"%)\n"+getBar(row, nombre_ligne));
+		
+		selectWindow("Results_complet");
+		// prend les valeurs  dans les colonne X, Y et Z (Slice) à la ligne row
+		x = Table.get("X", row);
+		y = Table.get("Y", row);
+		z = Table.get("Slice", row);
+		Spot_in_cell = Table.get("CellNumber", row);
+		
+		if (Spot_in_cell != 0){ // Si les coordonnées du spot sont dans une cellule
+
+			// selectWindow(tif_561); // pour le programme final
+			selectWindow("561.tif");
+			setSlice(z);
+			valeur_pixel_cible = getValue(x, y);
+			
+			if (valeur_pixel_cible != 0){ // si ≠ de 0 --> on à pas encore compté ce spot
+				// faire -11 sur les x et y pour le centrer
+				makeOval(x-11, y-11, 20, 20); // crée un cercle autour de chaque spot (prend en entrée des pixels)
+				getHistogram(0, counts, 65536);
+				getThreshold(lower, upper);
+				setAutoThreshold();
+				run("Set Measurements...", "mean integrated limit redirect=None decimal=3");
+				run("Measure");
+				Valeur_intensite = getResult("Mean", Table.getSelectionEnd); //Table.getSelectionEnd - Returns the index of the last selected row in the current table, or -1 if there is no selection. 
+				selectWindow("Results_complet");
+				Table.set("Intensity", row, Valeur_intensite); // rajoute la valeur intensité au tableau
+				setForegroundColor(0, 0, 0); 
+				run("Fill", "slice"); // marque le spot mesurer en noir (0,0,0)
+			}
+			
+			if (valeur_pixel_cible == 0){ // si = de 0 --> on à déjà compté ce spot
+				selectWindow("Results_complet");
+				Table.set("Intensity", row, NaN);
+			}
+		}
+
+		if (Spot_in_cell == 0){
+			selectWindow("Results_complet");
+			Table.set("Intensity", row, NaN);
+		}
+	}
+	
+	print(title, "\\Close");
+}
+
 function Phase7(){
 
 	//Scan Results tab and add a column with the Cell label for each X,Y position
-	//in: 	image stack "bassin-filtered" : stack of cell in gray level labeled and size filtered (from phase 4)
+	//in  : image stack "bassin-filtered" : stack of cell in gray level labeled and size filtered (from phase 4)
 	//		"Results" tab with X,Y coordonates and Slice position
 	//out : index of Cell number and count of spots in each Cell label
 
@@ -218,56 +285,73 @@ function Phase7(){
 	// if macro erreur fenètre ouverte --> afficher un message qui explique l'erreur (c'est dû aux mauvais résultats)
 }
 
-function Poissons_zebre(){
-	print("#### Début Phase 1 ####");
-	Phase1();
-	print("#### Phase 1 terminée ####");
-	print("#### Début Phase 2 ####");	
-	Phase2();
-	print("#### Phase 2 terminée ####");
-	print("#### Début Phase 3 ####");	
-	Phase3();
-	print("#### Phase 3 terminée ####");
-	print("#### Début Phase 4 ####");	
-	Phase4();
-	print("#### Phase 4 terminée ####");
-	print("#### Début Phase 5 ####");
-	Phase5();
-	print("#### Phase 5 terminée ####");	
-	Phase6();
-	print("#### Phase 6 terminée ####");
-	Phase7();
-	print("#### Phase 7 terminée ####");
-	selectWindow("Results");
+function Concatenation_Resultat(){
 
-SpotInCellsCount=newArray(nResults); //créer une array pour chaque colonne, extrait les données de table results dans chaque array
-CellValue=newArray(nResults);
-x=newArray(nResults);
-y=newArray(nResults);
-slice=newArray(nResults);
-Array.fill(SpotInCellsCount,1);
-Table.sort("CellNumber"); //trie de table results pour pouvoir obtenir les sommes cumulées dans SpotInCellsCount
-
-for (i = 0; i < nResults ; i++) {
-	slice[i]=getResult("Slice", i);
-	CellValue[i]=getResult("CellNumber", i); //extraction des numéros des cellules dans array CellValue
-	x[i]= getResult("X", i); //coordonnée x et y des spots
-	y[i]= getResult("Y", i); 
+	// mettre la description de la fonction
+	//in  :
+	//out :
 	
-	if(CellValue[i]==0){ // les spot dans la cellule de valeur 0 ne sont pas utilisés (à modifier peut etre)
-		SpotInCellsCount[i]="NaN";
+	selectWindow("Results");
+	SpotInCellsCount=newArray(nResults); //créer une array pour chaque colonne, extrait les données de table results dans chaque array
+	CellValue=newArray(nResults);
+	x=newArray(nResults);
+	y=newArray(nResults);
+	slice=newArray(nResults);
+	Array.fill(SpotInCellsCount,1);
+	Table.sort("CellNumber"); //trie de table results pour pouvoir obtenir les sommes cumulées dans SpotInCellsCount
+	
+	for (i = 0; i < nResults ; i++) {
+		slice[i]=getResult("Slice", i);
+		CellValue[i]=getResult("CellNumber", i); //extraction des numéros des cellules dans array CellValue
+		x[i]= getResult("X", i); //coordonnée x et y des spots
+		y[i]= getResult("Y", i); 
+		
+		if(CellValue[i]==0){ // les spot dans la cellule de valeur 0 ne sont pas utilisés (à modifier peut etre)
+			SpotInCellsCount[i]="NaN";
+		}
+		if(SpotInCellsCount[i]!="NaN"){ //comptage des spot contenus dans chaque cellule, le comptage final se trouve dans la derniere ligne avec la valeur CellValue d'origine(à améliorer)
+			selectWindow("Nombre de Spot / cellule");
+			j=Table.get("SpotInCellsCount", CellValue[i]);
+			selectWindow("Results");
+			SpotInCellsCount[i]=j;
+		}
 	}
-	if(SpotInCellsCount[i]!="NaN"){ //comptage des spot contenus dans chaque cellule, le comptage final se trouve dans la derniere ligne avec la valeur CellValue d'origine(à améliorer)
-		selectWindow("Nombre de Spot / cellule");
-		j=Table.get("SpotInCellsCount", CellValue[i]);
-		selectWindow("Results");
-		SpotInCellsCount[i]=j;
-	}
+	
+	Array.show("Results",CellValue,x,y,slice,SpotInCellsCount); //affichage des arrays dans results (écrase les donnés qui etaient de base dans results)
+	//ajouter la macro macrolut8bit quand elle sera terminée
 }
 
-Array.show("Results",CellValue,x,y,slice,SpotInCellsCount); //affichage des arrays dans results (écrase les donnés qui etaient de base dans results)
 
 
-//ajouter la macro macrolut8bit quand elle sera terminée
+
+function Poissons_zebre(){
+	Phase1();	
+	Phase2();
+	Phase3();	
+	Phase4();
+	Phase5();
+	Phase6();
+	Mesure_intensite();
+	Phase7();
+	Concatenation_Resultat();
 }
 
+
+
+
+
+
+
+
+
+
+// faire la meme chose pour tous le programme
+function getBar(p1, p2){
+	    n = 20;
+	    bar1 = "--------------------";
+	    bar2 = "********************";
+	    index = round(n*(p1/p2));
+	    if (index<1) index = 1;
+	    if (index>n-1) index = n-1;
+	    return substring(bar2, 0, index) + substring(bar1, index+1, n);
+	}
