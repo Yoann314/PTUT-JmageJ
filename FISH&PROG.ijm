@@ -32,10 +32,8 @@ for (i=0;i<l;i++) {
 		if (lengthOf(nb) == 2) {  // par précaution, il faut qu'il y ait seulement les images 488 et 561 dans le dossier 
 			
 			open(image+nb[1]);
-			tif_561 = getTitle();
 
 			open(image+nb[0]);//ouverture de 488 en dernier
-			tif_488 = getTitle();
 
 			Poissons_zebre();
 
@@ -80,8 +78,9 @@ function Phase2() {
 	selectWindow("ADD.tif");
 	run("Morphological Segmentation");
 	selectWindow("Morphological Segmentation"); // Activates the window with the title "Morphological Segmentation".
-	call("inra.ijpb.plugins.MorphologicalSegmentation.segment", "tolerance=10.0", "calculateDams=true", "connectivity=6");
-	
+	wait(1000);
+	call("inra.ijpb.plugins.MorphologicalSegmentation.segment", "tolerance=10.0", "calculateDams=true", "connectivity=6"); // Appele une méthode statique 
+	// passant un nombre arbitraire d'arguments de chaîne et renvoyant une chaîne.
 	log_index = -1;
 	while (log_index == -1) {
 		cont_log = getInfo("log"); //Returns the contents of the Log window, or "" if the Log window is not open.
@@ -110,7 +109,7 @@ function Phase4() {
 	//Filtrage des cellules en fonction de leur surface,
 	//les cellules de moins de 200 pixels sont retirées
 	//in: image "ADD-catchment-basins" 32 bits issue de macro phase 3
-	//out : image "bassin-filtered" 16 bits et rableau des coordonnée des centroïdes des cellules et leur volume
+	//out : image "bassin-filtered" 16 bits et rableau des coordonnée des centroïdes des cellules et leur volume (result_1.csv
 
 	selectWindow("ADD-catchment-basins.tif");
 	run("Options...", "iterations=1 count=1 black do=Nothing");
@@ -226,7 +225,7 @@ function Mesure_intensite() {
 	//in  :
 	//out :
 
-	open(tif_561); // reouvre l'image original sans la filtre apliquer a la phase 5
+	open(image+nb[1]); // reouvre l'image original sans la filtre apliquer a la phase 5
 	selectWindow("Results_2.csv");
 	nombre_ligne = Table.size;
 	run("Add...", "value=1 stack"); // on ajoute +1 à toutes les valleurs de pixel pour éviter d'en avoir un noir. 
@@ -286,61 +285,101 @@ function Concatenation_Resultat() {
 	// mettre la description de la fonction
 	//in  :
 	//out :
+
+	// on stock tous les vecteurs tableau dans des vecteurs pour diminuer le temps de calcul comparer a un "selectWindows --> table get" itérer
+
+	selectWindow("Nombre de Spot / cellule");
+	nb_ligne_label = Table.size;
+	Label 		   = newArray(nb_ligne_label); // il dois avoir une longeur egale à Nombre de Spot / cellule pour la suite
 	
-	selectWindow("Results_2.csv");
-	nb_ligne_2 = Table.size;
-	
-	// création des listes
-	SpotInCellsCount 	= newArray(nb_ligne_2); //créer une array pour chaque colonne, extrait les données de table results dans chaque array
-	Cell_Value 			= newArray(nb_ligne_2);
-	Intensity			= newArray(nb_ligne_2);
-	X_Cluster 			= newArray(nb_ligne_2);
-	Y_Cluster 			= newArray(nb_ligne_2);
-	Z_Cluster 			= newArray(nb_ligne_2);
-	
-	Table.sort("CellNumber"); //trie de table results pour pouvoir obtenir les sommes cumulées dans SpotInCellsCount
-	
-	for (row = 0; row < nb_ligne_2 ; row++) {
-		Cell_Value[row] = Table.get("CellNumber", row); //extraction des numéros des cellules dans array CellValue
-		Intensity[row] = Table.get("Intensity", row);
-		X_Cluster[row] = Table.get("X_Cluster", row); //coordonnée x, y et z des spots
-		Y_Cluster[row] = Table.get("Y_Cluster", row); 
-		Z_Cluster[row] = Table.get("Z_Cluster", row);
-	
-	
-	
-		if(Cell_Value[row] == 0) { // les spot dans la cellule de valeur 0 ne sont pas utilisés (à modifier peut etre)
-			SpotInCellsCount[row] = "NaN";
-		}
-		////////// optimiser ca avec des listes
-		/*
-		if(SpotInCellsCount[row] != "NaN") { //comptage des spot contenus dans chaque cellule, le comptage final se trouve dans la derniere ligne avec la valeur CellValue d'origine(à améliorer)
-			selectWindow("Nombre de Spot / cellule");
-			j = Table.get("SpotInCellsCount", Cell_Value[row]);
-			selectWindow("Results_2.csv");
-			SpotInCellsCount[row] = j;
-		}
-		*/
-	}
-	// pour compter le nombre de cellules qui n'ont pas de cluster
-	selectWindow("Results_1.csv");
-	Table.sort("Label");
+	selectWindow("Results_1.csv"); // initialise les vecteurs représentant le tableau "Results_1.csv" (t pour temporaire)
 	nb_ligne_1 = Table.size;
-	Label 		= newArray(nb_ligne_1);
-	// création des listes temporaire pour accélérer le calcul et ne pas lire dans les tableaux
+	//créer une array pour chaque colonne, extrait les données de table results dans chaque array
 	Volumet 	= newArray(nb_ligne_1);
 	X_Centroidt = newArray(nb_ligne_1);
 	Y_Centroidt = newArray(nb_ligne_1);
 	Z_Centroidt = newArray(nb_ligne_1);
-	
+	Table.sort("Label");
 	for (row = 0; row < nb_ligne_1 ; row++) {
-		Label[row] 			= Table.get("Label", row);
-		Volumet[row]		= Table.get("Volume", row); //créer une array pour chaque colonne, extrait les données de table results dans chaque array
+		Label[row] 			= Table.get("Label", row); //créer une array pour chaque colonne, extrait les données de table results dans chaque array
+		Volumet[row]		= Table.get("Volume", row); 
 		X_Centroidt[row]	= Table.get("X_Centroid", row);
 		Y_Centroidt[row]	= Table.get("Y_Centroid", row);
 		Z_Centroidt[row]	= Table.get("Z_Centroid", row);
 	}
 	
+	selectWindow("Nombre de Spot / cellule"); // initialise les vecteurs représentant le tableau "Nombre de Spot / cellule" (t pour temporaire)
+	nb_ligne = Table.size;
+	indexOfCellt 		= newArray(nb_ligne);
+	SpotInCellsCountt 	= newArray(nb_ligne);
+	
+	Volumett 	 = newArray(nb_ligne);
+	X_Centroidtt = newArray(nb_ligne);
+	Y_Centroidtt = newArray(nb_ligne);
+	Z_Centroidtt = newArray(nb_ligne);
+	
+	Table.sort("indexOfCell");
+	
+	i = 0;
+	for (row = 0; row < nb_ligne ; row++) {
+		indexOfCellt[row] 		= Table.get("indexOfCell", row);
+		SpotInCellsCountt[row] 	= Table.get("SpotInCellsCount", row);
+	
+		// apposition de results_1 en fonction de Nombre de spot / cellule
+		if (indexOfCellt[row] != Label[i]) { 
+			Volumett[row] 	  = NaN;
+			X_Centroidtt[row] = NaN;
+			Y_Centroidtt[row] = NaN;
+			Z_Centroidtt[row] = NaN;
+		}
+			
+		if (indexOfCellt[row] == Label[i]){
+			Volumett[row] 	  = Volumet[i];
+			X_Centroidtt[row] = X_Centroidt[i];
+			Y_Centroidtt[row] = Y_Centroidt[i];
+			Z_Centroidtt[row] = Z_Centroidt[i];	
+			i += 1;
+		}
+	}// le tableaux Nombre de spot.. et Results_1.csv sont concatener
+	
+	// création des vecteurs qui vont représenter le tabeau final
+	selectWindow("Results_2.csv"); 
+	nb_ligne_2 = Table.size;
+	
+	// création des vecteurs
+	Volume 		= newArray(nb_ligne_2);
+	X_Centroid 	= newArray(nb_ligne_2);
+	Y_Centroid 	= newArray(nb_ligne_2);
+	Z_Centroid 	= newArray(nb_ligne_2);
+	
+	indexOfCell 		= newArray(nb_ligne_2);
+	SpotInCellsCount 	= newArray(nb_ligne_2);
+	
+	X_Cluster 			= newArray(nb_ligne_2);
+	Y_Cluster 			= newArray(nb_ligne_2);
+	Z_Cluster 			= newArray(nb_ligne_2);
+	Cell_Value 			= newArray(nb_ligne_2);
+	Intensity			= newArray(nb_ligne_2);
+	
+	selectWindow("Results_2.csv");
+	Table.sort("CellNumber"); //trie de table results pour pouvoir obtenir les sommes cumulées dans SpotInCellsCount
+	
+	for (row = 0; row < nb_ligne_2 ; row++) {
+		X_Cluster[row] = Table.get("X_Cluster", row); //coordonnée x, y et z des spots
+		Y_Cluster[row] = Table.get("Y_Cluster", row); 
+		Z_Cluster[row] = Table.get("Z_Cluster", row);
+		Cell_Value[row]= Table.get("CellNumber", row);
+		Intensity[row] = Table.get("Intensity", row);
+	
+		SpotInCellsCount[row] = SpotInCellsCountt[Cell_Value[row]];
+		Volume[row] 	   	  = Volumett[Cell_Value[row]];
+		X_Centroid[row]  	  = X_Centroidtt[Cell_Value[row]];
+		Y_Centroid[row]       = Y_Centroidtt[Cell_Value[row]];
+		Z_Centroid[row]		  = Z_Centroidtt[Cell_Value[row]];
+	}
+	Array.show("Results_Finished_1.csv",Cell_Value,Volume,X_Centroid,Y_Centroid,Z_Centroid,SpotInCellsCount,X_Cluster,Y_Cluster,Z_Cluster,Intensity); // Tableaux final
+
+	/* // compteur de lignes à rajouter dans le tableau final pour les cellules sans cluster
 	nb_diff = 0;
 	diff = 0;
 	count = 0;
@@ -361,87 +400,12 @@ function Concatenation_Resultat() {
 		diff = 0;
 		count = 0;
 	}
-	//Array.show("rien du tout c'est de la merde",Label,Volumet,Cell_Value);// juste pour voir sur quoi tu travail
-	/////////////////// debut concaténation du tableau 1
+	*/
 
-
-	Volume 		= newArray(nb_ligne_2);
-	X_Centroid 	= newArray(nb_ligne_2);
-	Y_Centroid 	= newArray(nb_ligne_2);
-	Z_Centroid 	= newArray(nb_ligne_2);
-	compteur = cellule_sans_cluster + nb_ligne_2 
-	
-	l = Label[0];
-	j_en_ai_mare = 0
-	for (row = 0; row < compteur ; row++) {
-		k = Cell_Value[row];
-		if (k == 0) { // si on est pas dans une cellule
-			Volume[row]		= "NaN";
-			X_Centroid[row]	= "NaN";
-			Y_Centroid[row]	= "NaN";
-			Z_Centroid[row]	= "NaN";
-		}
-	Array.show("rien du tout c'est de la merde2",X_Centroid,Y_Centroid,Z_Centroid,Volume,Cell_Value);
-
-		if (k != 0) { // si on est dans une cellule
-			if (k == l) { // k=l ou k≠l
-				l = Label[j_en_ai_mare+1];
-				Volume[row]		= Volumet[j_en_ai_mare];
-				X_Centroid[row]	= X_Centroidt[j_en_ai_mare];
-				Y_Centroid[row]	= Y_Centroidt[j_en_ai_mare];
-				Z_Centroid[row]	= Z_Centroidt[j_en_ai_mare];
-				j_en_ai_mare += 1;
-			}
-			
-			if (k != l) {
-				l = Label[j_en_ai_mare+1];
-				Volume[row]		= Volumet[j_en_ai_mare];
-				X_Centroid[row]	= X_Centroidt[j_en_ai_mare];
-				Y_Centroid[row]	= Y_Centroidt[j_en_ai_mare];
-				Z_Centroid[row]	= Z_Centroidt[j_en_ai_mare];
-				j_en_ai_mare += 1;
-				
-			}
-		}
-	}
-
-
-
-
-
-
-
-
-	
-	Array.show("Results_Finished_2",Volume,X_Centroid,Y_Centroid,Z_Centroid);
-	Array.show("Results_Finished_1.csv",Cell_Value,X_Cluster,Y_Cluster,Z_Cluster,Intensity,SpotInCellsCount);
-
-selectWindow("Results_Finished_1.csv");
-nombre_ligne_1 = Table.size;
-for (row = 0; row < nombre_ligne_1 ; row++) {
-	selectWindow("Results_1.csv");
-	l = Table.get("Label", row);
-	for (row_1 = 0; row_1 < nombre_ligne_1 ; row_1++) {
-		selectWindow("Results_Finished_1.csv");
-		k = Table.get("Cell_Value", row_1);
-			if (k !=0 && k 
-			count = 
-	}
-
-}
-
-
-
-
+// question Yoann
 // Table.deleteRows(firstIndex, lastIndex) - Supprime les lignes spécifiées.
 // pour supprimer les ligne ou les spots ne sont pas dans les cellules ? poser la question a Julie.
-
-
-
-
-Table.renameColumn("CellValue", "Cell_Value"); // Renames a column.
-Table.rename("Results_1.csv", "bassin-filtered-morpho"); // Renames a table.
-Table.setColumn(columnName, array); // Assigns an array to the specified column.
+// enregistrer le brui et le soustraire a toute les slice question christian
 }
 
 
