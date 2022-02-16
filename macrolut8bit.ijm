@@ -17,22 +17,22 @@ if(huitbit == true) {
 		row=Table.get("SpotInCellsCount", i);	//attribue à 3 niveaux de couleur en fonction du nombre de cluster indiqué dans "SpotInCellsCount"
 		print(row);
 		if (row==0) {
-			rouge[i]=0;	 //Noir pour les cellules ayants 0 spot
-			vert[i]=0;
-			bleu[i]=0;
+			rouge[i]=89;	 //Noir pour les cellules ayants 0 spot
+			vert[i]=89;
+			bleu[i]=215;
 		}
 		else if (row==rowmax){			//bleu clair pour les cellules ayant le plus de spots
-			rouge[i]=0;
+			rouge[i]=255;
 			vert[i]=0;
-			bleu[i]=255;
+			bleu[i]=0;
 		}
 		else{                       // Un bleu adapté en fonction du nombre de spot. 
 			a=rowmax-row;
 			r=255%a;
 			d=255-r/a;
-			rouge[i]=0;
+			rouge[i]=255-d;
 			vert[i]=0;
-			bleu[i]=255-d;
+			bleu[i]=0;
 		}
 	}
 //selectwindow("nom");
