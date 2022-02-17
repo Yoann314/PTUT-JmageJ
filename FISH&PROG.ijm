@@ -302,6 +302,7 @@ function Concatenation_Resultat() {
 	Y_Centroidt = newArray(nb_ligne_1);
 	Z_Centroidt = newArray(nb_ligne_1);
 	Table.sort("Label");
+	
 	for (row = 0; row < nb_ligne_1 ; row++) { // Extrait les données de "Results_1.csv" dans chaques vecteurs.
 		Label[row] 			= Table.get("Label", row); 
 		Volumet[row]		= Table.get("Volume", row); 
@@ -399,3 +400,5 @@ function Poissons_zebre(){
 	Mesure_intensite();
 	Concatenation_Resultat();
 }
+
+//showProgress(progress)
