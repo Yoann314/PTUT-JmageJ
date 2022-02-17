@@ -193,7 +193,7 @@ function Phase7() {
 	// Scan Results tab and add a column with the Cell label for each X,Y position
 	// in  : image stack "bassin-filtered" : stack of cell in gray level labeled and size filtered (from phase 4)
 	//		"Results" tab with X,Y coordonates and Slice position
-	// out : index of Cell number and count of spots in each Cell label (Nombre de Spot / cellule et Results --> Results_2.csv)
+	// out : index of Cell number and count of spots in each Cell label (Nb_cluster_par_cell et Results --> Results_2.csv)
 	//		 (indexOfCell,SpotInCellsCount)(X,Y,Slice,CellNumber)
 	
 	selectWindow("bassin-filtered.tif");
@@ -214,7 +214,7 @@ function Phase7() {
 		SpotInCellsCount[a]++;
 	}
 	indexOfCell = Array.getSequence(n);
-	Array.show("Nombre de Spot / cellule",indexOfCell,SpotInCellsCount);
+	Array.show("Nb_cluster_par_cell",indexOfCell,SpotInCellsCount);
 	Table.rename("Results", "Results_2.csv");
 	close("*");
 }
@@ -286,13 +286,13 @@ function Concatenation_Resultat() {
 
 	// Concataine tous les resultas aquis dans les tableaux en un seul tableau.
 	// Tous les tableaux sont stocké dans des vecteurs pour diminuer le temps de calcul.
-	// in  : Nombre de Spot / cellule (csv), Results_1.csv et Results_2.csv
+	// in  : Nb_cluster_par_cell (csv), Results_1.csv et Results_2.csv
 	// out : Results_Finished_1.csv contenant tous les resultats 
 	//       (Cell_Value,Volume,X_Centroid,Y_Centroid,Z_Centroid,SpotInCellsCount,X_Cluster,Y_Cluster,Z_Cluster,Intensity)
 	
-	selectWindow("Nombre de Spot / cellule");
+	selectWindow("Nb_cluster_par_cell");
 	nb_ligne_label = Table.size; // Stock dans la variable le nombre de lignes de la fenêtre ouverte.
-	Label 		   = newArray(nb_ligne_label); // Il dois avoir une longeur egale à "Nombre de Spot / cellule" pour la suite
+	Label 		   = newArray(nb_ligne_label); // Il dois avoir une longeur egale à "Nb_cluster_par_cell" pour la suite
 	
 	selectWindow("Results_1.csv"); // Initialise les vecteurs représentant le tableau "Results_1.csv" (t pour temporaire)
 	nb_ligne_1 = Table.size;
@@ -310,7 +310,7 @@ function Concatenation_Resultat() {
 		Z_Centroidt[row]	= Table.get("Z_Centroid", row);
 	}
 	
-	selectWindow("Nombre de Spot / cellule");
+	selectWindow("Nb_cluster_par_cell");
 	nb_ligne = Table.size;
 	indexOfCellt 		= newArray(nb_ligne);
 	SpotInCellsCountt 	= newArray(nb_ligne);
@@ -320,14 +320,14 @@ function Concatenation_Resultat() {
 	Y_Centroidtt = newArray(nb_ligne);
 	Z_Centroidtt = newArray(nb_ligne);
 	
-	Table.sort("indexOfCell"); // Trie le tableau "Nombre de Spot / cellule" en fonction de la colonne "indexOfCell".
+	Table.sort("indexOfCell"); // Trie le tableau "Nb_cluster_par_cell" en fonction de la colonne "indexOfCell".
 	
 	i = 0;
 	for (row = 0; row < nb_ligne ; row++) {
 		indexOfCellt[row] 		= Table.get("indexOfCell", row);
 		SpotInCellsCountt[row] 	= Table.get("SpotInCellsCount", row);
 	
-		// Apposition de "Results_1" et "Nombre de spot / cellule".
+		// Apposition de "Results_1" et "Nb_cluster_par_cell".
 		if (indexOfCellt[row] != Label[i]) { // Si ils sont différent la cellules n'existe pas
 			Volumett[row] 	  = NaN;
 			X_Centroidtt[row] = NaN;
@@ -381,6 +381,9 @@ function Concatenation_Resultat() {
 	}
 	Array.show("Results_Finished_1.csv",Cell_Value,Volume,X_Centroid,Y_Centroid,Z_Centroid,SpotInCellsCount,X_Cluster,Y_Cluster,Z_Cluster,Intensity); // Construction du tableau final
 
+
+	Table.set("Intensity", row, NaN)
+	
 // ajout des lignes manquante
 // Table.deleteRows(firstIndex, lastIndex) - Supprime les lignes spécifiées.
 }
