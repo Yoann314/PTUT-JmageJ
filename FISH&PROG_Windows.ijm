@@ -8,7 +8,7 @@ chemin_embryon=File.getParent(chemin_stade);
 
 embryon=getFileList(chemin_embryon);	// Récupération de la liste des dossier embryon et stade
 stade=getFileList(chemin_stade);		// Par exemple dans embryon si on a que 2 embryons, array.show(embryon) retourne EMBRYON 1/
-																											//			EMBRYON 2/
+																													  // EMBRYON 2/
 
 Array.sort(stade);			// Trie la liste des embryons au cas où il seraientt dans le désordre
 Array.sort(embryon);
@@ -28,24 +28,16 @@ for (i=0; i<l; i++) {
 		nb = getFileList(image);		// Nb contient le nom des fichiers images
 
 		Array.sort(nb);		// On met l'image 488 en premier 
-		if (lengthOf(nb) == 2) {  // Par précaution, il faut qu'il y ait seulement les images 488 et 561 dans le dossier 
-			
-			open(image + nb[1]); // Ouverture de l'image avec le canal 561
 
-			open(image + nb[0]); // Ouverture de l'image avec le canal 488 (en dernier)
+		if (lengthOf(nb) == 2) {  // Par précaution, il faut qu'il y ait seulement les images 488 et 561 dans le dossier 
 
 			Poissons_zebre();
 
-			selectWindow("Results_Finished.csv");
-			Table.save(image);
-
 			close("*");		// Fermeture des images
-			selectWindow("Results_Finished.csv");
+			selectWindow("Log");
 			run("Close");
-			
-			// Appeler la fonction poisson zebre puis fermer les images
-
 		}
+		
 		else {
 			showMessage("Le repertoire contenant les images doit contenir seulement 488 et 561 !");
 		}
@@ -62,13 +54,11 @@ function Phase1() {
 	// out: Même stack filtré
 
 	// selectWindow("488.tif"); // à tej pour le prog final //////////////////////
-	open(image + nb[0]); // pour le programme final
+	open(image + nb[0]); // Ouverture de l'image avec le canal 488
 	run("Gaussian Blur...", "sigma=1 stack");
 	run("Subtract Background...", "rolling=50 stack");
 	run("Anisotropic Anomalous Diffusion 2D Filter", "apply anomalous=1.0000 condutance=15.0000 time=0.1250 number=5 edge=Exponential");
 	rename("ADD.tif");
-	selectWindow(tif_488);
-	close();
 }
 
 function Phase2() {
@@ -146,7 +136,7 @@ function Phase5() {
 	// out : image stack des dots nommée: "Stack" en binaire
 
 	// selectWindow("561.tif"); // à tej pour le prog final //////////////////////
-	open(image + nb[1]); // Pour le programme final.
+	open(image + nb[1]); // Ouverture de l'image avec le canal 561
 	p = 30;
 	getDimensions(width, height, channels, slices, frames); // Returns the dimensions of the current image
 	setSlice((floor(slices/2))); // Affiche la nième slices de la pile active (celle du milieu ici)
@@ -304,7 +294,6 @@ function Concatenation_Resultat() {
 	X_Centroidt = newArray;
 	Y_Centroidt = newArray;
 	Z_Centroidt = newArray;
-	Table.sort("Label");
 	
 	for (row = 0; row < nb_ligne_1 ; row++) { // Extrait les données de "Results_1.csv" dans chaques vecteurs
 		Label[row] 		= Table.get("Label", row); 
@@ -408,7 +397,7 @@ function Concatenation_Resultat() {
 		}
 	}
 	
-	Array.show("Results_Finished_1.csv",Cell_Value,Volume,X_Centroid,Y_Centroid,Z_Centroid,SpotInCellsCount,X_Cluster,Y_Cluster,Z_Cluster,Intensity); // Construction du tableau final
+	Array.show("Results_Finished_1.csv",Cell_Value, Volume, X_Centroid, Y_Centroid, Z_Centroid, SpotInCellsCount, X_Cluster, Y_Cluster, Z_Cluster, Intensity); // Construction du tableau final
 	Table.showRowNumbers(true);
 	
 	Cell_Value = 0;
@@ -422,7 +411,6 @@ function Concatenation_Resultat() {
 		row += 1;
 	}
 	Table.rename("Results", "Results_Finished.csv");
-	//Table.sort("Cell_value"); // ne marche pas jsp pk...
 
 	selectWindow("Results_1.csv");
 	run("Close");
@@ -431,6 +419,10 @@ function Concatenation_Resultat() {
 	selectWindow("Nb_cluster_par_cell.csv");
 	run("Close");
 	selectWindow("Results_Finished_1.csv");
+	run("Close");
+
+	selectWindow("Results_Finished.csv");
+	saveAs("Results",image+"Results_Finished.csv");
 	run("Close");
 }
 
