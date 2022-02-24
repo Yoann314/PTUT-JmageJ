@@ -16,16 +16,16 @@ Array.sort(embryon);
 l = lengthOf(embryon);		// Nombre d'embryons
 for (i=0; i<l; i++) {	
 	
-	chemin_stade=chemin_embryon+ "/" +embryon[i];	// Chemin_stade = chemin pour accéder au stade pour chaque embryons
+	chemin_stade = chemin_embryon + File.separator + embryon[i];	// Chemin_stade = chemin pour accéder au stade pour chaque embryons
 	
 	for (j=0; j<3; j++) {
 													
 		chemin_image = chemin_stade + stade[j];		 // Chemin_image = C:\Users\nd202\Desktop\TEST\EMBRYON [i]\T[j]\
 		
-		image = chemin_image;			// Image = C:\\Users\\nd202\\Desktop\\TEST\\EMBRYON [i]\\T[j]\\
-															// Utilisation de double anti slash car sinon pour de specialiser le caractère '\' (sinon open() ne fonctionne pas)
+			// Image = C:\\Users\\nd202\\Desktop\\TEST\\EMBRYON [i]\\T[j]\\
+			// Utilisation de double anti slash car sinon pour de specialiser le caractère '\' (sinon open() ne fonctionne pas)
 		
-		nb = getFileList(image);		// Nb contient le nom des fichiers images
+		nb = getFileList(chemin_image);		// Nb contient le nom des fichiers images
 
 		Array.sort(nb);		// On met l'image 488 en premier 
 
@@ -40,7 +40,7 @@ for (i=0; i<l; i++) {
 		
 		else {
 			showMessage("Le repertoire contenant les images doit contenir seulement 488 et 561 !");
-		}	
+		}
 	}
 }
 
@@ -51,12 +51,14 @@ function Phase1() {
 	// in : Image avec le signal des contours ouverte (488 nm)
 	// out: Même stack filtré
 
-	// selectWindow("488.tif"); // à tej pour le prog final //////////////////////
-	open(image + nb[0]); // Ouverture de l'image avec le canal 488
+	//selectWindow("488.tif"); // à tej pour le prog final //////////////////////
+	setBatchMode(true);
+	open(chemin_image + nb[0]); // Ouverture de l'image avec le canal 488
 	run("Gaussian Blur...", "sigma=1 stack");
 	run("Subtract Background...", "rolling=50 stack");
 	run("Anisotropic Anomalous Diffusion 2D Filter", "apply anomalous=1.0000 condutance=15.0000 time=0.1250 number=5 edge=Exponential");
 	rename("ADD.tif");
+	setBatchMode(false);
 }
 
 function Phase2() {
@@ -77,7 +79,6 @@ function Phase2() {
 		wait(2000);
 		log_index = cont_log.indexOf("Whole");
 	}
-	
 }
 
 function Phase3() {
@@ -134,7 +135,7 @@ function Phase5() {
 	// out : image stack des dots nommée: "Stack" en binaire
 
 	//selectWindow("561.tif"); // à tej pour le prog final //////////////////////
-	open(image + nb[1]); // Ouverture de l'image avec le canal 561
+	open(chemin_image + nb[1]); // Ouverture de l'image avec le canal 561
 	p = 30;
 	getDimensions(width, height, channels, slices, frames); // Returns the dimensions of the current image
 	setSlice((floor(slices/2))); // Affiche la nième slices de la pile active (celle du milieu ici)
@@ -206,7 +207,7 @@ function Phase7() {
 	indexOfCell = Array.getSequence(n);
 	Array.show("Nb_cluster_par_cell.csv",indexOfCell,SpotInCellsCount);
 	Table.rename("Results", "Results_2.csv");
-	close("*");
+	//close("*"); // on grade bassin filtred pour la lut
 }
 
 function Mesure_intensite() {
@@ -216,9 +217,9 @@ function Mesure_intensite() {
 	// out : Results_2.csv avec les inensitées des clusters rajoutés
 	//		 (X_Cluster,Y_Cluster,Z_Cluster,CellNumber,Intensity)
 
-	open(image+nb[1]); // Ouverture de l'image avec le canal 561
+	open(chemin_image+nb[1]); // Ouverture de l'image avec le canal 561
 	rename("561.tif");
-	// selectWindow("Results_2.csv"); // à tej pour le prog final //////////////////////
+	//selectWindow("Results_2.csv"); // à tej pour le prog final //////////////////////
 	nombre_ligne = Table.size;
 	run("Add...", "value=1 stack"); // On ajoute +1 à toutes les valeurs de pixel pour éviter d'en avoir un noir
 	
@@ -281,52 +282,41 @@ function Concatenation_Resultat() {
 	
 	setOption("ExpandableArrays",true); // Longueur des array adaptatif (automatique dans imageJ 1.53g)
 	
-	selectWindow("Nb_cluster_par_cell.csv");
-	nb_ligne_label = Table.size; // Stock dans la variable le nombre de lignes de la fenêtre ouverte
-	Label 		   = newArray; // Il dois avoir une longeur egale à "Nb_cluster_par_cell.csv" pour la suite
-	
-	selectWindow("Results_1.csv"); // Initialise les vecteurs représentant le tableau "Results_1.csv" (t pour temporaire)
-	nb_ligne_1 = Table.size;
 	// Créer un vecteur pour chaque colonnes avec "nb_ligne_1" nombre de lignes
-	Volumet 	= newArray;
-	X_Centroidt = newArray;
-	Y_Centroidt = newArray;
-	Z_Centroidt = newArray;
+	selectWindow("Results_1.csv");
+	nb_ligne1 = Table.size;
+	Labels = Table.getColumn("Label");
+	Volumet = Table.getColumn("Volume");// Initialise et Extrait les données de "Results_1.csv" dans chaques vecteurs (t pour temporaire)
+	X_Centroidt = Table.getColumn("X_Centroid");
+	Y_Centroidt = Table.getColumn("Y_Centroid");
+	Z_Centroidt = Table.getColumn("Z_Centroid");
 	
-	for (row = 0; row < nb_ligne_1 ; row++) { // Extrait les données de "Results_1.csv" dans chaques vecteurs
-		Label[row] 		= Table.get("Label", row); 
-		Volumet[row]	= Table.get("Volume", row); 
-		X_Centroidt[row]= Table.get("X_Centroid", row);
-		Y_Centroidt[row]= Table.get("Y_Centroid", row);
-		Z_Centroidt[row]= Table.get("Z_Centroid", row);
+	Label = newArray; // je sais c'est moche mais j'ai pas trouvé d'autre solution...
+	for (row = 0; row < nb_ligne1 ; row++) {
+		Label[row] = Labels[row]; 
 	}
 	
 	selectWindow("Nb_cluster_par_cell.csv");
 	nb_ligne = Table.size;
-	indexOfCellt 		= newArray;
-	SpotInCellsCountt 	= newArray;
+	Table.sort("indexOfCell"); // Trie le tableau "Nb_cluster_par_cell.csv" en fonction de la colonne "indexOfCell"
+	indexOfCellt = Table.getColumn("indexOfCell");
+	SpotInCellsCountt = Table.getColumn("SpotInCellsCount");
 	
 	Volumett 	 = newArray;
 	X_Centroidtt = newArray;
 	Y_Centroidtt = newArray;
 	Z_Centroidtt = newArray;
 	
-	Table.sort("indexOfCell"); // Trie le tableau "Nb_cluster_par_cell.csv" en fonction de la colonne "indexOfCell"
-	
 	i = 0;
-	for (row = 0; row < nb_ligne ; row++) {
-		indexOfCellt[row] 		= Table.get("indexOfCell", row);
-		SpotInCellsCountt[row] 	= Table.get("SpotInCellsCount", row);
-	
-		// Apposition de "Results_1" et "Nb_cluster_par_cell.csv"
-		if (indexOfCellt[row] != Label[i]) { // Si ils sont différent la cellules n'existe pas
+	for (row = 0; row < nb_ligne ; row++) { // Apposition de "Results_1" et "Nb_cluster_par_cell.csv"
+		if (indexOfCellt[row] != Label[i]) { // Si la cellules n'existe pas
 			Volumett[row] 	  = NaN;
 			X_Centroidtt[row] = NaN;
 			Y_Centroidtt[row] = NaN;
 			Z_Centroidtt[row] = NaN;
 		}
 			
-		if (indexOfCellt[row] == Label[i]){ // Création du vecteur "Volumett,..." de même longueur que "indexOfCellt" avec les mêmes positions pour chaque index de cellules
+		if (indexOfCellt[row] == Label[i]) { // Création du vecteur "Volumett,..." de même longueur que "indexOfCellt" avec les mêmes positions pour chaque index de cellules
 			Volumett[row] 	  = Volumet[i];
 			X_Centroidtt[row] = X_Centroidt[i];
 			Y_Centroidtt[row] = Y_Centroidt[i];
@@ -334,6 +324,7 @@ function Concatenation_Resultat() {
 			i += 1;
 		}
 	} // Les vecteurs "Nombre de spot.." et "Results_1.csv" sont maintenant équivalents
+	
 	
 	// Création des vecteurs qui vont représenter le tabeau final
 	selectWindow("Results_2.csv"); 
@@ -372,6 +363,9 @@ function Concatenation_Resultat() {
 	}
 	
 	// Rajout des lignes volume,X,Y,Z_centroid des cellules sans clusters
+	selectWindow("Results_1.csv"); 
+	nb_ligne_1 = Table.size;
+	
 	row3 = nb_ligne_2;
 	for (row2 = 0; row2 < nb_ligne_1 ; row2++) {
 		flag = false;
@@ -408,20 +402,17 @@ function Concatenation_Resultat() {
 		}
 		row += 1;
 	}
-	Table.rename("Results", "Results_Finished.csv");
 	//Table.sort("Cell_value"); // ne marche pas jsp pk...
-
+	
 	selectWindow("Results_1.csv");
 	run("Close");
 	selectWindow("Results_2.csv");
 	run("Close");
 	selectWindow("Nb_cluster_par_cell.csv");
 	run("Close");
-	selectWindow("Results_Finished_1.csv");
-	run("Close");
-
+	
 	selectWindow("Results_Finished.csv");
-	saveAs("Results",image+"Results_Finished.csv");
+	saveAs("Results",chemin_image+"Results_Finished.csv");
 	run("Close");
 }
 
