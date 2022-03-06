@@ -1,11 +1,10 @@
-
-
 max=getNumber("Choisir le max d'intensité possible dans une cellule", 0);
 rouge=newArray(256);
 vert=newArray(256);
 bleu=newArray(256);
-selectWindow("Results_2.csv");
-for (i = 0; i < 256; i++) {
+selectWindow("Results_Finished.csv");
+coef1=255/max
+for (i = 1; i < Table.size ; i++) {
 	l=Table.get("Intensity", i);
 	if(l==0){
 		rouge[i]=89;
@@ -18,10 +17,8 @@ for (i = 0; i < 256; i++) {
 		bleu[i]=0;
 	}
 	else {
-		a=max-l;
-		r=255%a;
-		d=(255-r)/a;
-		rouge[i]=255-d;
+		a=(max*coef1)-(l*coef1);
+		rouge[i]=a;
 		vert[i]=0;
 		bleu[i]=0;
 	}
