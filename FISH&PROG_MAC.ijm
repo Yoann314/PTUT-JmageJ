@@ -219,12 +219,12 @@ function Mesure_intensite() {
 
 	open(chemin_image+nb[1]); // Ouverture de l'image avec le canal 561
 	rename("561.tif");
-	//selectWindow("Results_2.csv"); // à tej pour le prog final //////////////////////
+	selectWindow("Results_2.csv"); // à tej pour le prog final //////////////////////
 	nombre_ligne = Table.size;
 	run("Add...", "value=1 stack"); // On ajoute +1 à toutes les valeurs de pixel pour éviter d'en avoir un noir
 	
 	for (row = 0; row < nombre_ligne; row++) {
-		
+	
 		selectWindow("Results_2.csv");
 		// Prend les valeurs dans les colonnes X, Y et Z (Slice) à la ligne row
 		x = Table.get("X", row);
@@ -241,18 +241,21 @@ function Mesure_intensite() {
 			if (valeur_pixel_cible != 0){ // On a pas encore compté ce cluster
 				// Faire -11 sur les x et y pour centrer le cercle autour du cluster
 				makeOval(x-11, y-11, 20, 20); // Crée un cercle autour de chaque spot (prend en entrée des pixels)
+				run("Duplicate...", "use");
+				run("Clear Outside");
 				getHistogram(0, counts, 65536);
 				getThreshold(lower, upper);
 				setAutoThreshold();
-				run("Set Measurements...", "mean integrated limit redirect=None decimal=3");
+				run("Set Measurements...", "integrated limit redirect=None decimal=3");
 				run("Measure");
-				Valeur_intensite = getResult("Mean", Table.getSelectionEnd); // Table.getSelectionEnd - Returns the index of the last selected row in the current table, or -1 if there is no selection
+				close("1");
+				Valeur_intensite = getResult("IntDen", Table.getSelectionEnd); // Table.getSelectionEnd - Returns the index of the last selected row in the current table, or -1 if there is no selection
 				selectWindow("Results_2.csv");
 				Table.set("Intensity", row, Valeur_intensite); // Ajoute la valeur "Intensity" au tableau
 				setForegroundColor(0, 0, 0);
 				run("Fill", "slice"); // Marque le cluster qui vient d'être mesurer en noir (0,0,0)
 			}
-			
+		
 			if (valeur_pixel_cible == 0) { // On a déjà compté ce cluster
 				selectWindow("Results_2.csv");
 				Table.set("Intensity", row, NaN);
@@ -411,8 +414,10 @@ function Concatenation_Resultat() {
 	selectWindow("Nb_cluster_par_cell.csv");
 	run("Close");
 	
-	selectWindow("Results_Finished.csv");
+	selectWindow("Results");
 	saveAs("Results",chemin_image+"Results_Finished.csv");
+	run("Close");
+	selectWindow("Results_Finished_1.csv");
 	run("Close");
 }
 
