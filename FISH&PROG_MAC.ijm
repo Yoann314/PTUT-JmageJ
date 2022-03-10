@@ -32,7 +32,6 @@ for (i=0; i<l; i++) {
 		if (lengthOf(nb) == 2) {  // Par précaution, il faut qu'il y ait seulement les images 488 et 561 dans le dossier 
 
 			Poissons_zebre();
-
 			close("*");		// Fermeture des images
 			selectWindow("Log");
 			run("Close");
@@ -267,7 +266,8 @@ function Mesure_intensite() {
 			Table.set("Intensity", row, NaN);
 		}
 	}
-	close();
+	selectWindow("bassin-filtered.tif");
+	close("\\Others");
 	close("Results");
 	selectWindow("Results_2.csv");
 	Table.renameColumn("X", "X_Cluster");
@@ -416,12 +416,76 @@ function Concatenation_Resultat() {
 	
 	selectWindow("Results");
 	saveAs("Results",chemin_image+"Results_Finished.csv");
-	run("Close");
 	selectWindow("Results_Finished_1.csv");
 	run("Close");
 }
 
+function lut_spot(rowmax) { 
+
+	selectWindow("Results");
+	rouge=newArray(Table.size);	//création d'arrays pour chaque couleur primaire
+	vert=newArray(Table.size);		//taille 256 car 255 niveau pour une LUT
+	bleu=newArray(Table.size);
+	rowmax=20; //On fixe le max de spot à 20 (valeur pouvant être changé). 
+	coef= 255/20;
+	for (i = 1; i < Table.size ; i++) {
+		row=Table.get("SpotInCellsCount", i);	//attribue à 3 niveaux de couleur en fonction du nombre de cluster indiqué dans "SpotInCellsCount"
+		
+		if (row==0) {
+			rouge[i]=89;	 //bleu pour les cellules ayants 0 spot
+			vert[i]=89;
+			bleu[i]=215;
+		}
+		else if (row==rowmax){			//rouge clair pour les cellules ayant le plus de spots
+			rouge[i]=255;
+			vert[i]=0;
+			bleu[i]=0;
+		}
+		else{                       // Un rouge adapté en fonction du nombre de spot. 
+			a=(coef*rowmax)-(coef*row);
+			rouge[i]=a;
+			vert[i]=0;
+			bleu[i]=0;
+		}
+	}
+	
+	setLut(rouge, vert, bleu);
+	saveAs("tiff",chemin_image+"LUT_par_Spot");
+
+}
+
+function lut_intensity(max) {
+	rouge=newArray(256);
+	vert=newArray(256);
+	bleu=newArray(256);
+	selectWindow("Results");
+	coef1=255/max;
+	for (i = 1; i < Table.size ; i++) {
+		l=Table.get("Intensity", i);
+		if(l==0){
+			rouge[i]=89;
+			vert[i]=89;
+			bleu[i]=215;
+		}
+		if(l==max){
+			rouge[i]=255;
+			vert[i]=0;
+			bleu[i]=0;
+		}
+		else {
+			a=(max*coef1)-(l*coef1);
+			rouge[i]=a;
+			vert[i]=0;
+			bleu[i]=0;
+		}
+	}
+	setLut(rouge, vert, bleu);
+	saveAs("tiff",chemin_image+"LUT_Intensity");
+
+}
+
 function Poissons_zebre(){
+	lut=getBoolean("Affichage des LUT ?");
 	Phase1();	
 	Phase2();
 	Phase3();	
@@ -431,6 +495,59 @@ function Poissons_zebre(){
 	Phase7();
 	Mesure_intensite();
 	Concatenation_Resultat();
+	selectWindow("bassin-filtered.tif");
+	close("\\Others");
+	//bassin-filtered est sensé être ouvert + table Results
+	if (lut) {
+
+		Dialog.create("Quelle LUT ?");
+
+		labels=newArray("INTENSITÉ","NOMBRE DE SPOT");
+		defaults=newArray(true,false);
+		Dialog.addCheckboxGroup(2, 1, labels, defaults);
+		Dialog.show();
+		res=newArray(2);
+		for (i=0;i<2;i++) {
+			res[i]=Dialog.getCheckbox();
+		}
+	
+	
+		Dialog.create("Paramètres :");
+		Dialog.addMessage("Sélection des paramètres :");
+
+		if (res[0]) {
+			Dialog.addSlider("Intensité maximale attendue dans une cellule :", 50, 3000, 1500);
+			maxint=Dialog.getNumber();
+		}
+	
+		if (res[1]) {
+			Dialog.addSlider("Nombre de spot par cellule :", 1, 50, 20);
+			maxspot=Dialog.getNumber();
+		}	
+		
+		Array.getStatistics(res, min, max, mean, stdDev);
+		
+		if(max==0) {
+			Dialog.create("Attention !");
+			Dialog.addMessage("Veuillez choisir au moins une LUT !",20, "#ff0000");
+			Dialog.show();
+		}
+		Dialog.show();
+		wait(2000);
+		if (res[1]) {
+			selectWindow("bassin-filtered.tif");
+			run("Duplicate...", "duplicate");
+			selectWindow("bassin-filtered-1.tif");
+			lut_spot(maxspot);
+		}
+		wait(2000);
+		if (res[0]) {
+			selectWindow("bassin-filtered.tif");
+			lut_intensity(maxint);
+		}
+	}
+	selectWindow("Results");
+	run("Close");
 }
 
 //showProgress(progress)
