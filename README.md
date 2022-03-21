@@ -1,6 +1,5 @@
 # PTUT ImageJ
-Programme de segmentation d'identification de cellules et de mesure d'intensité de fluorescence
-
+#titre dépendances:
 
 Dans ce programme on auras besoin d'une version de imageJ de : 
 On auras besoin des plugins : 
