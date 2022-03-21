@@ -1,4 +1,4 @@
-# Procédure d’usage de la série de macro commandes FISH&PROG.
+# Procédure d’usage de la macro commande FISH&PROG.
 
 ## Dépendances:
 
