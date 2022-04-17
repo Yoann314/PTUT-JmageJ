@@ -6,23 +6,20 @@ Dialog.create("Conditions d'utilisation :");
 Dialog.addMessage("    -Veuillez créer un dossier pour chaque embryon dans lequel se trouvera 3 dossiers pour chaque stade.(T1,T2 et T3) \n \n    -Dans chaque dossier stade, doit se trouver l'image 488 et l'image 561. Ainsi, il ne doit contenir que 2 éléments (488 et 561) \n \nPar exemple : \nEmbryon1/T1/488             ...pour l'embryon 1 au stade 1.");
 Dialog.show();
 
-repertoire_image=getDir("Veuillez séléctionner le repertoire contenant les images"); 	// Récupération du chemin menant au repertoire des image, ex: C:\Users\nd202\Desktop\TEST\EMBRYON 1\T1\
-chemin_stade=File.getParent(repertoire_image);  // Récupération des repertoire contenant les différent stades et embryons
-chemin_embryon=File.getParent(chemin_stade);
+repertoire_image = getDir("Veuillez séléctionner le repertoire contenant les images"); 	// Récupération du chemin menant au repertoire des image, ex: C:\Users\nd202\Desktop\TEST\EMBRYON 1\T1\
+chemin_stade 	= File.getParent(repertoire_image);  // Récupération des repertoire contenant les différent stades et embryons
+chemin_embryon 	= File.getParent(chemin_stade);
 
-embryon=getFileList(chemin_embryon);	// Récupération de la liste des dossier embryon et stade
-stade=getFileList(chemin_stade);		// Par exemple dans embryon si on a que 2 embryons, array.show(embryon) retourne EMBRYON 1/
-																													  // EMBRYON 2/
+embryon = getFileList(chemin_embryon);	// Récupération de la liste des dossier embryon et stade
+stade 	= getFileList(chemin_stade);		// Par exemple dans embryon si on a que 2 embryons, array.show(embryon) retourne EMBRYON 1/
 
 Array.sort(stade);			// Trie la liste des embryons au cas où il seraientt dans le désordre
 Array.sort(embryon);
 
-l = lengthOf(embryon);		// Nombre d'embryons
+l = lengthOf(embryon);
+nombreStade = lengthOf(stade);
 
 ////////////// Progress Bar //////////////
-title = "[Progress]";
-run("Text Window...", "name="+ title + " width=25 height=2 monospaced");
-
 function getBar(p1, p2) {
     n = 20;
     bar1 = "--------------------";
@@ -45,6 +42,9 @@ for (i = 0; i < l; i++) {
 		
 			// Image = C:\\Users\\nd202\\Desktop\\TEST\\EMBRYON [i]\\T[j]\\
 			// Utilisation de double anti slash car sinon pour de specialiser le caractère '\' (sinon open() ne fonctionne pas)
+			
+		title = "[Embryon : "+ embryon[i] + l + "  Temps : " + stade[j] + nombreStade + "]";
+		run("Text Window...", "name="+ title + " width=40 height=3 monospaced");
 		
 		nb = getFileList(chemin_image);		// Nb contient le nom des fichiers images
 
@@ -57,7 +57,9 @@ for (i = 0; i < l; i++) {
 			close("*");		// Fermeture des images
 			selectWindow("Log");
 			run("Close");
-			
+			print(title, "\\Close");
+			selectWindow("Results_For_LUT.csv");
+			run("Close");
 		}
 		
 		else {
@@ -82,8 +84,6 @@ function Phase1() {
 	run("Anisotropic Anomalous Diffusion 2D Filter", "apply anomalous=1.0000 condutance=15.0000 time=0.1250 number=5 edge=Exponential");
 	rename("ADD.tif");
 	//setBatchMode(false);
-	
-	print(title, "\\Update:" + "         " + (20*100)/100 + "%\n" + getBar(20, 100)); // Progress Bar
 }
 
 function Phase2() {
@@ -105,8 +105,6 @@ function Phase2() {
 		wait(2000);
 		log_index = cont_log.indexOf("Whole");
 	}
-	
-	print(title, "\\Update:" + "         " + (40*100)/100 + "%\n" + getBar(40, 100)); // Progress Bar
 }
 
 function Phase3() {
@@ -121,8 +119,6 @@ function Phase3() {
 	call("inra.ijpb.plugins.MorphologicalSegmentation.createResultImage");
 	selectWindow("Morphological Segmentation");
 	close();
-	
-	print(title, "\\Update:" + "         " + (45*100)/100 + "%\n" + getBar(45, 100)); // Progress Bar
 }
 
 function Phase4() {
@@ -147,8 +143,8 @@ function Phase4() {
 	imageCalculator("AND create stack", "Mask of mask","ADD-catchment-basins.tif");
 	rename("bassin-filtered.tif");
 	close("\\Others"); // Ferme tout sauf "bassin-filtered.tif"
-	//setVoxelSize(width1, height1, depth1, unit1); // Donne les dimentions des pixels pour calculer les bons volumes
-	setVoxelSize(0.1205, 0.1205, 0.5, "µm");
+	setVoxelSize(width1, height1, depth1, "µm"); // Donne les dimentions des pixels pour calculer les bons volumes
+	//setVoxelSize(0.1205, 0.1205, 0.5, "µm");
 
 	// Calcule du volumes des cellules
 	run("Analyze Regions 3D", "volume centroid surface_area_method=[Crofton (13 dirs.)] euler_connectivity=6");
@@ -179,11 +175,8 @@ function Phase4() {
 			row  -= 1;
 			nb_ligne -= 1;
 		}
-
 		row += 1;
 	}
-	
-	print(title, "\\Update:" + "         " + (50*100)/100 + "%\n" + getBar(50, 100)); // Progress Bar
 }
 
 function Phase5() {
@@ -194,7 +187,6 @@ function Phase5() {
 	// in: ouvrir l'image acquise sur canal 561 nm qui contient, outre les contours, mais les dots a repérer.
 	// out : image stack des dots nommée: "Stack" en binaire
 
-	//selectWindow("561.tif"); // à tej pour le prog final //////////////////////
 	open(chemin_image + nb[1]); // Ouverture de l'image avec le canal 561
 	p = 30;
 	getDimensions(width, height, channels, slices, frames); // Returns the dimensions of the current image
@@ -217,8 +209,6 @@ function Phase5() {
 	run("Options...", "iterations=1 count=1 black do=Dilate stack");
 	selectWindow("561.tif");
 	close();
-	
-	print(title, "\\Update:" + "         " + (55*100)/100 + "%\n" + getBar(55, 100)); // Progress Bar
 }
 
 function Phase6() {
@@ -241,8 +231,6 @@ function Phase6() {
 	run("Analyze Particles...", "pixel display clear stack"); // Création du tableau Results_2.csv avec les coordonées des clusters en pixel
 	selectWindow("bassin-filtered.tif");
 	close("\\Others");
-	
-	print(title, "\\Update:" + "         " + (60*100)/100 + "%\n" + getBar(60, 100)); // Progress Bar
 }
 
 function Phase7() {
@@ -275,8 +263,6 @@ function Phase7() {
 	indexOfCell = Array.getSequence(n);
 	Array.show("Nb_cluster_par_cell.csv",indexOfCell,SpotInCellsCount);
 	Table.rename("Results", "Results_2.csv");
-	
-	print(title, "\\Update:" + "         " + (70*100)/100 + "%\n" + getBar(70, 100)); // Progress Bar
 }
 
 function Mesure_intensite() {
@@ -289,7 +275,7 @@ function Mesure_intensite() {
 	//setBatchMode(true);
 	open(chemin_image + nb[1]); // Ouverture de l'image avec le canal 561
 	rename("561.tif");
-	selectWindow("Results_2.csv"); // à tej pour le prog final //////////////////////
+	selectWindow("Results_2.csv");
 	nombre_ligne = Table.size;
 	run("Add...", "value=1 stack"); // On ajoute +1 à toutes les valeurs de pixel pour éviter d'en avoir un noir
 	
@@ -344,8 +330,6 @@ function Mesure_intensite() {
 	Table.renameColumn("X", "X_Cluster");
 	Table.renameColumn("Y", "Y_Cluster");
 	Table.renameColumn("Slice", "Z_Cluster");
-	
-	print(title, "\\Update:" + "         " + (80*100)/100 + "%\n" + getBar(80, 100)); // Progress Bar
 }
 
 function Concatenation_Resultat() {
@@ -466,7 +450,6 @@ function Concatenation_Resultat() {
 	}
 	
 	Array.show("Results_Finished_1.csv",Cell_Value, Volume, X_Centroid, Y_Centroid, Z_Centroid, SpotInCellsCount, X_Cluster, Y_Cluster, Z_Cluster, Intensity); // Construction du tableau final
-	Table.showRowNumbers(true);
 	
 	// Supprime les clusters sans cellule
 	Cell_Value = 0;
@@ -480,7 +463,39 @@ function Concatenation_Resultat() {
 		row += 1;
 	}
 	
-	// Supprime les cellules avec les volumme 
+	// Array for LUT
+	selectWindow("Results_Finished_1.csv");
+	nb_ligne = Table.size;
+	Cell_Value = Table.getColumn("Cell_Value");
+	SpotInCellsCount = Table.getColumn("SpotInCellsCount");
+	Intensity = Table.getColumn("Intensity");
+	
+	Cell_Value_LUT = newArray;
+	SpotInCellsCount_LUT = newArray;
+	Intensity_LUT = newArray;
+	
+	for (row = 0; row < nb_ligne; row++) { 
+		Cell_Value_LUT[row] = 0;
+	}
+	Cell_Value_LUT[0] = Cell_Value[0];
+	SpotInCellsCount_LUT[0] = SpotInCellsCount[0];
+	Intensity_LUT[0] = Intensity[0];
+	i=1;
+		
+	for (row = 1; row < nb_ligne; row++) { 
+		if (Cell_Value_LUT[i-1] != Cell_Value[row]) { // Construction des Cell_Value_LUT
+			Cell_Value_LUT[i] = Cell_Value[row];
+			SpotInCellsCount_LUT[i] = SpotInCellsCount[row];
+			Intensity_LUT[i] = Intensity[row];
+			i++;
+		}
+		
+		if (Cell_Value_LUT[i-1] == Cell_Value[row]) {
+			Intensity_LUT[i-1] += Intensity[row];
+		}
+	}
+	
+	Array.show("Results_For_LUT.csv",Cell_Value_LUT, SpotInCellsCount_LUT, Intensity_LUT); // Construction du tableau pour les LUT   
 	
 	selectWindow("Results_1.csv");
 	run("Close");
@@ -489,102 +504,97 @@ function Concatenation_Resultat() {
 	selectWindow("Nb_cluster_par_cell.csv");
 	run("Close");
 
-	//selectWindow("Results_Finished_1.csv");
 	IJ.renameResults("Results_Finished_1.csv","Results");
-	saveAs("Results",chemin_image+"Results_Finished.csv");
-	
-	print(title, "\\Update:" + "         " + (90*100)/100 + "%\n" + getBar(90, 100)); // Progress Bar
+	//saveAs("Results",chemin_image+"Results_Finished.csv");
+	saveAs("Results",chemin_image+"Results_Finished" + " embryon" + i+1 + " stade" + j+1 + ".csv");
+	run("Close");
 }
 
-function lut_spot(rowmax) { 
+function lut_spot(maxSpot) { 
 	
-	// fonction
-	// in  : 
-	// out : 
+	// fonction : Colore les cellules en fonction du nombre de clusters qu’elles possèdent (en 3D) du bleu (peu de clusters) au rouge (beaucoup de clusters).
+	// in  : bassin-filtered.tif (16-bit) et Results_For_LUT.csv
+	// out : bassin-filtered.tif (8-bit)
 	
+	// Pour transformer en 8-bit mais garder les bonnes Values
+	run("Multiply...", "value=" + 255);
+	setMinAndMax(0, 255);
 	run("8-bit");
-	selectWindow("Results");
-	rouge = newArray(Table.size);	//création d'arrays pour chaque couleur primaire
-	vert = newArray(Table.size);		//taille 256 car 255 niveau pour une LUT
-	bleu = newArray(Table.size);
-	rowmax = 20; //On fixe le max de spot à 20 (valeur pouvant être changé). 
-	coef = 255 / 20;
-	for (i = 1; i < Table.size ; i++) {
-		row = Table.get("SpotInCellsCount", i);	//attribue à 3 niveaux de couleur en fonction du nombre de cluster indiqué dans "SpotInCellsCount"
-		if (row == 0) {
-			rouge[i] = 89;	 //bleu pour les cellules ayants 0 spot
-			vert[i] = 89;
-			bleu[i] = 215;
-		}
+	
+	selectWindow("Results_For_LUT.csv");
+	multiplicateur = 255/maxSpot; // Multiplicateur pour mettre la LUT a l'échelle en fonction du maximum de spots
+	
+	for (i = 1; i < Table.size; i++) {
+		rowSpot = Table.get("SpotInCellsCount_LUT", i);
+		rowValue = Table.get("Cell_Value_LUT", i);
 		
-		else if (row == rowmax) {			//rouge clair pour les cellules ayant le plus de spots
-			rouge[i] = 255;
-			vert[i] = 0;
-			bleu[i] = 0;
-		}
-		
-		else {                       // Un rouge adapté en fonction du nombre de spot. 
-			a = (coef * rowmax) - (coef * row);
-			rouge[i] = a;
-			vert[i] = 0;
-			bleu[i] = 0;
+		if (rowSpot != 0 && rowValue != 0) {
+			newValue = rowSpot * multiplicateur;
+			run("Replace value", "pattern=rowValue replacement=newValue"); // Need 8-bit
 		}
 	}
-	
-	setLut(rouge, vert, bleu);
-	saveAs("tiff",chemin_image+"LUT_par_Spot");
+	selectWindow("bassin-filtered-1.tif");
+	run("LUT... ", "open=/Users/yoann/Downloads/bassin-filtered.lut");
+	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay");
+	saveAs("tiff",chemin_image+"LUT_par_Spot" + " embryon" + i+1 + " stade" + j+1);
 }
 
-function lut_intensity(max) {
+function lut_intensity(maxInt) {
 	
-	// fonction
-	// in  : 
-	// out : 
+	// fonction : Colore les cellules en fonction de la somme des l'intensitées des clusters qu’elles possèdent (en 3D) du bleu (peu de clusters) au rouge (beaucoup de clusters).
+	// in  : bassin-filtered.tif (16-bit) et Results_For_LUT.csv
+	// out : bassin-filtered.tif (8-bit)
 	
+	// Pour transformer en 8-bit mais garder les bonnes Values
+	run("Multiply...", "value=" + 255);
+	setMinAndMax(0, 255);
 	run("8-bit");
-	rouge = newArray(256);
-	vert = newArray(256);
-	bleu = newArray(256);
-	selectWindow("Results");
-	coef1 = 255 / max;
-	for (i = 1; i < Table.size ; i++) {
-		l = Table.get("Intensity", i);
-		if(l == 0) {
-			rouge[i] = 89;
-			vert[i] = 89;
-			bleu[i] = 215;
+
+	selectWindow("Results_For_LUT.csv");
+	multiplicateur = 255/maxInt; // Multiplicateur pour mettre la LUT a l'échelle en fonction du maximum de spots
+	
+	for (i = 1; i < Table.size; i++) {
+		rowInt = Table.get("Intensity_LUT", i);
+		rowValue = Table.get("Cell_Value_LUT", i);
+		
+		if (isNaN(rowInt) == 1 && rowValue != 0) {
+			run("Replace value", "pattern=rowValue replacement=1"); // Need 8-bit
 		}
 		
-		if(l == max) {
-			rouge[i] = 255;
-			vert[i] = 0;
-			bleu[i] = 0;
-		}
-		
-		else {
-			a = (max * coef1) - (l * coef1);
-			rouge[i] = a;
-			vert[i] = 0;
-			bleu[i] = 0;
+		if (rowInt > 0 && rowValue != 0) {
+			newValue = rowInt * multiplicateur;
+			run("Replace value", "pattern=rowValue replacement=newValue"); // Need 8-bit
 		}
 	}
-	
-	setLut(rouge, vert, bleu);
-	saveAs("tiff",chemin_image+"LUT_Intensity");
+	selectWindow("bassin-filtered.tif");
+	run("LUT... ", "open=/Users/yoann/Downloads/bassin-filtered.lut");
+	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay");
+	saveAs("tiff",chemin_image+"LUT_par_Intensite" + " embryon" + i+1 + " stade" + j+1);
 }
 
 function Poissons_zebre(){
 	
 	lut = getBoolean("Affichage des LUT ?");
-	Phase1();	
+	print(title, "\\Update:" + "         " + (1*100)/100 + "%\n" + getBar(1, 100)); // Début
+	Phase1();
+	print(title, "\\Update:" + "         " + (20*100)/100 + "%\n" + getBar(20, 100)); // Fin phase 1
 	Phase2();
+	print(title, "\\Update:" + "         " + (40*100)/100 + "%\n" + getBar(40, 100)); // Fin phase 2
 	Phase3();	
+	print(title, "\\Update:" + "         " + (45*100)/100 + "%\n" + getBar(45, 100)); // Fin phase 3
 	Phase4();
+	print(title, "\\Update:" + "         " + (50*100)/100 + "%\n" + getBar(50, 100)); // Fin phase 4
 	Phase5();
+	print(title, "\\Update:" + "         " + (55*100)/100 + "%\n" + getBar(55, 100)); // Fin phase 5
 	Phase6();
+	print(title, "\\Update:" + "         " + (60*100)/100 + "%\n" + getBar(60, 100)); // Fin phase 6
 	Phase7();
+	print(title, "\\Update:" + "         " + (70*100)/100 + "%\n" + getBar(70, 100)); // Fin phase 7
 	Mesure_intensite();
+	print(title, "\\Update:" + "         " + (80*100)/100 + "%\n" + getBar(80, 100)); // Fin phase de Mesure de l'intensitée
 	Concatenation_Resultat();
+	print(title, "\\Update:" + "         " + (90*100)/100 + "%\n" + getBar(90, 100)); // Fin phase de Concatenation des Resultats
+	
 	selectWindow("bassin-filtered.tif");
 	close("\\Others");
 	
@@ -601,18 +611,23 @@ function Poissons_zebre(){
 		for (i = 0; i < 2; i++) {
 			res[i] = Dialog.getCheckbox();
 		}
-	
-		Dialog.create("Paramètres :");
-		Dialog.addMessage("Sélection des paramètres :");
 
 		if (res[0]) {
-			Dialog.addSlider("Intensité maximale attendue dans une cellule :", 50, 3000, 1500);
-			maxint = Dialog.getNumber();
+			Dialog.create("Paramètres :");
+			Dialog.addMessage("Sélection des paramètres :");
+			Dialog.addMessage("");
+			Dialog.addSlider("Intensité maximale attendue dans une cellule :", 50, 8000, 4154);
+			Dialog.show();
+			maxInt = Dialog.getNumber();
 		}
 	
 		if (res[1]) {
+			Dialog.create("Paramètres :");
+			Dialog.addMessage("Sélection des paramètres :");
+			Dialog.addMessage("");
 			Dialog.addSlider("Nombre de spot par cellule :", 1, 50, 20);
-			maxspot = Dialog.getNumber();
+			Dialog.show();
+			maxSpot = Dialog.getNumber();
 		}	
 		
 		Array.getStatistics(res, min, max, mean, stdDev);
@@ -629,21 +644,15 @@ function Poissons_zebre(){
 			selectWindow("bassin-filtered.tif");
 			run("Duplicate...", "duplicate");
 			selectWindow("bassin-filtered-1.tif");
-			lut_spot(maxspot);
+			lut_spot(maxSpot);
 		}
 		
 		wait(1000);
 		if (res[0]) {
 			selectWindow("bassin-filtered.tif");
-			lut_intensity(maxint);
+			lut_intensity(maxInt);
 		}
 	}
 	
-	print(title, "\\Update:" + "         " + (100*100)/100 + "%\n" + getBar(100, 100)); // Progress Bar
-	
-	selectWindow("Results");
-	run("Close");
-	print(title, "\\Close");
+	print(title, "\\Update:" + "         " + (100*100)/100 + "%\n" + getBar(100, 100)); // Fin des Luts
 }
-
-//showProgress(progress)
