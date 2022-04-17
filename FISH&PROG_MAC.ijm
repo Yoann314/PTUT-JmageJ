@@ -534,7 +534,7 @@ function lut_spot(maxSpot) {
 		}
 	}
 	selectWindow("bassin-filtered-1.tif");
-	run("LUT... ", "open=/Users/yoann/Downloads/bassin-filtered.lut");
+	run("bassin-filtered");
 	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay");
 	saveAs("tiff",chemin_image+"LUT_par_Spot" + " embryon" + i+1 + " stade" + j+1);
 }
@@ -567,7 +567,8 @@ function lut_intensity(maxInt) {
 		}
 	}
 	selectWindow("bassin-filtered.tif");
-	run("LUT... ", "open=/Users/yoann/Downloads/bassin-filtered.lut");
+
+	run("bassin-filtered");
 	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay");
 	saveAs("tiff",chemin_image+"LUT_par_Intensite" + " embryon" + i+1 + " stade" + j+1);
 }

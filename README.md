@@ -6,6 +6,8 @@ Utiliser Fiji avec les plugins suivants :
 -Anomalous Diffusion Filters PlugIn : CSIM Laboratory : https://imagej.net/plugins/csim-lab   
 -IJPB plugins pour MorpholibJ
 
+Requiert de télécharger le fichier  " bassin-filtered.lut " et de le placer dans le dossier " /Applications/Fiji.app/luts/ " puis redémarrer Fiji.
+
 version de Fiji requise :
 
 ## Usage :  
