@@ -523,7 +523,7 @@ function lut_spot(maxSpot) {
 	
 	selectWindow("Results_For_LUT.csv");
 	multiplicateur = 255/maxSpot; // Multiplicateur pour mettre la LUT a l'échelle en fonction du maximum de spots
-	
+	n=1;
 	for (i = 1; i < Table.size; i++) {
 		rowSpot = Table.get("SpotInCellsCount_LUT", i);
 		rowValue = Table.get("Cell_Value_LUT", i);
@@ -531,11 +531,13 @@ function lut_spot(maxSpot) {
 		if (rowSpot != 0 && rowValue != 0) {
 			newValue = rowSpot * multiplicateur;
 			run("Replace value", "pattern=rowValue replacement=newValue"); // Need 8-bit
+			n+=1;
 		}
 	}
 	selectWindow("bassin-filtered-1.tif");
 	run("bassin-filtered");
 	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay");
+	run("Calibration Bar...", "location=[Upper Left] fill=Black label=White number=n decimal=0 font=[15] zoom=1 overlay");
 	saveAs("tiff",chemin_image+"LUT_par_Spot" + " embryon" + i+1 + " stade" + j+1);
 }
 
@@ -552,7 +554,7 @@ function lut_intensity(maxInt) {
 
 	selectWindow("Results_For_LUT.csv");
 	multiplicateur = 255/maxInt; // Multiplicateur pour mettre la LUT a l'échelle en fonction du maximum de spots
-	
+	n=1;
 	for (i = 1; i < Table.size; i++) {
 		rowInt = Table.get("Intensity_LUT", i);
 		rowValue = Table.get("Cell_Value_LUT", i);
@@ -564,12 +566,14 @@ function lut_intensity(maxInt) {
 		if (rowInt > 0 && rowValue != 0) {
 			newValue = rowInt * multiplicateur;
 			run("Replace value", "pattern=rowValue replacement=newValue"); // Need 8-bit
+			n+=1;
 		}
 	}
 	selectWindow("bassin-filtered.tif");
 
 	run("bassin-filtered");
 	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay");
+	run("Calibration Bar...", "location=[Upper Left] fill=Black label=White number=n decimal=0 font=[15] zoom=1 overlay");
 	saveAs("tiff",chemin_image+"LUT_par_Intensite" + " embryon" + i+1 + " stade" + j+1);
 }
 
