@@ -32,18 +32,18 @@ function getBar(p1, p2) {
 ////////////// Progress Bar //////////////
 
 
-for (i = 0; i < l; i++) {	
+for (embi = 0; embi < l; embi++) {	
 	
-	chemin_stade = chemin_embryon + File.separator + embryon[i];	// Chemin_stade = chemin pour accéder au stade pour chaque embryons
+	chemin_stade = chemin_embryon + File.separator + embryon[embi];	// Chemin_stade = chemin pour accéder au stade pour chaque embryons
 	
-	for (j = 0; j < 3; j++) {
+	for (staj = 0; staj < 3; staj++) {
 													
-		chemin_image = chemin_stade + stade[j];		 // Chemin_image = C:\Users\nd202\Desktop\TEST\EMBRYON [i]\T[j]\
+		chemin_image = chemin_stade + stade[staj];		 // Chemin_image = C:\Users\nd202\Desktop\TEST\EMBRYON [i]\T[j]\
 		
 			// Image = C:\\Users\\nd202\\Desktop\\TEST\\EMBRYON [i]\\T[j]\\
 			// Utilisation de double anti slash car sinon pour de specialiser le caractère '\' (sinon open() ne fonctionne pas)
 			
-		title = "[Embryon : "+ embryon[i] + l + "  Temps : " + stade[j] + nombreStade + "]";
+		title = "[Embryon : "+ embryon[embi] + l + "  Temps : " + stade[staj] + nombreStade + "]";
 		run("Text Window...", "name="+ title + " width=40 height=3 monospaced");
 		
 		nb = getFileList(chemin_image);		// Nb contient le nom des fichiers images
@@ -505,8 +505,7 @@ function Concatenation_Resultat() {
 	run("Close");
 
 	IJ.renameResults("Results_Finished_1.csv","Results");
-	//saveAs("Results",chemin_image+"Results_Finished.csv");
-	saveAs("Results",chemin_image+"Results_Finished" + " embryon" + i+1 + " stade" + j+1 + ".csv");
+	saveAs("Results",chemin_image+"Results_Finished" + "_embryon_" + embi+1 + "_stade_" + staj+1 + ".csv");
 	run("Close");
 }
 
@@ -523,22 +522,25 @@ function lut_spot(maxSpot) {
 	
 	selectWindow("Results_For_LUT.csv");
 	multiplicateur = 255/maxSpot; // Multiplicateur pour mettre la LUT a l'échelle en fonction du maximum de spots
-	n=1;
-	for (i = 1; i < Table.size; i++) {
-		rowSpot = Table.get("SpotInCellsCount_LUT", i);
+	
+	rouge = newArray; // Creation des vecteurs pour les trois couleurs primères
+	vert = newArray;
+	bleu = newArray;
+	
+	n = Table.size	
+	for (i = 0; i < Table.size; i++) { // Attribue une couleur à chaque cellules fonction du nombre de spots
+		row = Table.get("SpotInCellsCount_LUT", i);
 		rowValue = Table.get("Cell_Value_LUT", i);
-		
-		if (rowSpot != 0 && rowValue != 0) {
-			newValue = rowSpot * multiplicateur;
-			run("Replace value", "pattern=rowValue replacement=newValue"); // Need 8-bit
-			n+=1;
-		}
+		rouge[rowValue] = row * multiplicateur; // Donne le % de rouge pour la cellule "rowValue"
+		vert[rowValue] = 0;
+		bleu[rowValue] = 255 - (row * multiplicateur); // Donne le % de bleu pour la cellule "rowValue"
 	}
+	
 	selectWindow("bassin-filtered-1.tif");
-	run("bassin-filtered");
-	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay");
+	setLut(rouge, vert, bleu); // Applique la lut avec les trois vecteurs créés précédemment
+	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay"); // Ajout de l'échelle
 	run("Calibration Bar...", "location=[Upper Left] fill=Black label=White number=n decimal=0 font=[15] zoom=1 overlay");
-	saveAs("tiff",chemin_image+"LUT_par_Spot" + " embryon" + i+1 + " stade" + j+1);
+	saveAs("tiff",chemin_image+"LUT_par_Spot" + "_embryo_" + embi+1 + "_stad_" + staj+1);
 }
 
 function lut_intensity(maxInt) {
@@ -551,30 +553,27 @@ function lut_intensity(maxInt) {
 	run("Multiply...", "value=" + 255);
 	setMinAndMax(0, 255);
 	run("8-bit");
-
+	
 	selectWindow("Results_For_LUT.csv");
-	multiplicateur = 255/maxInt; // Multiplicateur pour mettre la LUT a l'échelle en fonction du maximum de spots
-	n=1;
-	for (i = 1; i < Table.size; i++) {
-		rowInt = Table.get("Intensity_LUT", i);
+	multiplicateur = 255/maxInt; // Multiplicateur pour mettre la LUT a l'échelle en fonction du maximum de spots	
+	
+	rouge = newArray;
+	vert = newArray;
+	bleu = newArray;	
+	
+	n = Table.size	
+	for (i = 0; i < Table.size; i++) {// Attribue une couleur à chaque cellules fonction de la somme des intensitées portées par chaque cellules
+		row = Table.get("Intensity_LUT", i);
 		rowValue = Table.get("Cell_Value_LUT", i);
-		
-		if (isNaN(rowInt) == 1 && rowValue != 0) {
-			run("Replace value", "pattern=rowValue replacement=1"); // Need 8-bit
-		}
-		
-		if (rowInt > 0 && rowValue != 0) {
-			newValue = rowInt * multiplicateur;
-			run("Replace value", "pattern=rowValue replacement=newValue"); // Need 8-bit
-			n+=1;
-		}
+		rouge[rowValue] = row * multiplicateur; // Donne le % de rouge pour la cellule "rowValue"
+		vert[rowValue] = 0;
+		bleu[rowValue] = 255 - (row * multiplicateur); // Donne le % de bleu pour la cellule "rowValue"
 	}
 	selectWindow("bassin-filtered.tif");
-
-	run("bassin-filtered");
-	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay");
+	setLut(rouge, vert, bleu); // Applique la lut avec les trois vecteurs créés précédemment
+	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay"); // Ajout de l'échelle
 	run("Calibration Bar...", "location=[Upper Left] fill=Black label=White number=n decimal=0 font=[15] zoom=1 overlay");
-	saveAs("tiff",chemin_image+"LUT_par_Intensite" + " embryon" + i+1 + " stade" + j+1);
+	saveAs("tiff",chemin_image+"LUT_par_Intensite" + "_embryon_" + embi+1 + "_stade_" + staj+1);
 }
 
 function Poissons_zebre(){
@@ -599,7 +598,6 @@ function Poissons_zebre(){
 	print(title, "\\Update:" + "         " + (80*100)/100 + "%\n" + getBar(80, 100)); // Fin phase de Mesure de l'intensitée
 	Concatenation_Resultat();
 	print(title, "\\Update:" + "         " + (90*100)/100 + "%\n" + getBar(90, 100)); // Fin phase de Concatenation des Resultats
-	
 	selectWindow("bassin-filtered.tif");
 	close("\\Others");
 	
@@ -630,7 +628,7 @@ function Poissons_zebre(){
 			Dialog.create("Paramètres :");
 			Dialog.addMessage("Sélection des paramètres :");
 			Dialog.addMessage("");
-			Dialog.addSlider("Nombre de spot par cellule :", 1, 50, 20);
+			Dialog.addSlider("Nombre de spot par cellule :", 1, 50, 15);
 			Dialog.show();
 			maxSpot = Dialog.getNumber();
 		}	
