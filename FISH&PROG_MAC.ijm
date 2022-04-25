@@ -572,7 +572,7 @@ function lut_intensity(maxInt) {
 	selectWindow("bassin-filtered.tif");
 	setLut(rouge, vert, bleu); // Applique la lut avec les trois vecteurs créés précédemment
 	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay"); // Ajout de l'échelle
-	run("Calibration Bar...", "location=[Upper Left] fill=Black label=White number=n decimal=0 font=[15] zoom=1 overlay");
+	run("Calibration Bar...", "location=[Upper Left] fill=Black label=White number=5 decimal=0 font=[15] zoom=1 overlay");
 	saveAs("tiff",chemin_image+"LUT_par_Intensite" + "_embryon_" + embi+1 + "_stade_" + staj+1);
 }
 
