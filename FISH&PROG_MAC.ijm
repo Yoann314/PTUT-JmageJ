@@ -158,11 +158,11 @@ function Phase4() {
 	Dialog.create("Filtration du volume des cellules");
 	
 	Dialog.addMessage("Veuillez choisir le volume maximale d'une cellule :");
-	Dialog.addSlider("Volume maximale (µm3) : ", 1, 1000, 700);
+	Dialog.addSlider("Volume maximale (µm3) : ", 1, 50000, 700);
 	volumeMax = Dialog.getNumber();
 	
 	Dialog.addMessage("Veuillez choisir le volume minimale d'une cellule :");
-	Dialog.addSlider("Volume minimale (µm3) : ", 1, 1000, 90);
+	Dialog.addSlider("Volume minimale (µm3) : ", 1, 50000, 90);
 	volumeMin = Dialog.getNumber();
 	
 	Dialog.show();
