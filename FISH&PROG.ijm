@@ -77,7 +77,9 @@ function Phase1() {
 
 	setBatchMode(true); // Permet de gagner du temps en affichant pas les resultats à l'écran
 	open(chemin_image + nb[0]); // Ouverture de l'image avec le canal 488
+	//selectWindow("488.tif");
 	getVoxelSize(width1, height1, depth1, unit1); // resultat écrit en pixel
+	print(width1," ", height1," ", depth1," ", "µm");
 	run("Gaussian Blur...", "sigma=1 stack");
 	run("Subtract Background...", "rolling=50 stack");
 	run("Anisotropic Anomalous Diffusion 2D Filter", "apply anomalous=1.0000 condutance=15.0000 time=0.1250 number=5 edge=Exponential");
@@ -152,15 +154,16 @@ function Phase4() {
 	Table.renameColumn("Centroid.Z", "Z_Centroid");
 	
 	// Filtration du volume (diam géodésique = super long !)
-	Dialog.create("Filtration du volume des cellules");
+	Dialog.createNonBlocking("Filtration du volume des cellules");
 	
 	Dialog.addMessage("Veuillez choisir le volume maximale d'une cellule :");
-	Dialog.addSlider("Volume maximale (pixel) : ", 5000, 100000, 80000);
+	Dialog.addSlider("Volume maximale (pixel) : ", 1000, 200000, 80000);
 	volumeMax = Dialog.getNumber();
 	
 	Dialog.addMessage("Veuillez choisir le volume minimale d'une cellule :");
-	Dialog.addSlider("Volume minimale (pixel) : ", 5000, 100000, 10000);
+	Dialog.addSlider("Volume minimale (pixel) : ", 1000, 200000, 10000);
 	volumeMin = Dialog.getNumber();
+	print("Volume maximum choisi : ", volumeMax, " et volume minimum choisi : ", volumeMin );
 	
 	Dialog.show();
 	row = 0;
@@ -174,6 +177,7 @@ function Phase4() {
 		}
 		row += 1;
 	}
+	print("Les cellules concervées un un volume compris entre maximum ", volumeMax, " et minimum ", volumeMin);
 }
 
 function Phase5() {
@@ -535,7 +539,6 @@ function lut_spot(maxSpot) {
 	selectWindow("bassin-filtered-1.tif");
 	setLut(rouge, vert, bleu); // Applique la lut avec les trois vecteurs créés précédemment
 	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay"); // Ajout de l'échelle
-	//run("Calibration Bar...", "location=[Upper Left] fill=Black label=White number=5 decimal=0 font=[15] zoom=1 overlay");
 	saveAs("tiff",chemin_image+"LUT_par_Spot" + "_embryo_" + embi+1 + "_stad_" + staj+1);
 }
 
@@ -567,7 +570,6 @@ function lut_intensity(maxInt) {
 	selectWindow("bassin-filtered.tif");
 	setLut(rouge, vert, bleu); // Applique la lut avec les trois vecteurs créés précédemment
 	run("Scale Bar...", "width=10 height=10 thickness=4 font=14 color=White background=None location=[Lower Right] horizontal bold overlay"); // Ajout de l'échelle
-	//run("Calibration Bar...", "location=[Upper Left] fill=Black label=White number=5 decimal=0 font=[15] zoom=1 overlay");
 	saveAs("tiff",chemin_image+"LUT_par_Intensite" + "_embryon_" + embi+1 + "_stade_" + staj+1);
 }
 
@@ -575,23 +577,41 @@ function Poissons_zebre(){
 	
 	lut = getBoolean("Affichage des LUT ?");
 	print(title, "\\Update:" + "         " + (1*100)/100 + "%\n" + getBar(1, 100)); // Début
+	print("Début de la phase 1/10 : Filtrage (très long)");
 	Phase1();
+	print("Fin de la phase 1");
 	print(title, "\\Update:" + "         " + (20*100)/100 + "%\n" + getBar(20, 100)); // Fin phase 1
+	print("Début de la phase 2/10 : Segmentation des cellule ");
 	Phase2();
+	print("Fin de la phase 2");
 	print(title, "\\Update:" + "         " + (40*100)/100 + "%\n" + getBar(40, 100)); // Fin phase 2
-	Phase3();	
+	print("Début de la phase 3/10 : Segmentation des cellules");
+	Phase3();
+	print("Fin de la phase 3");
 	print(title, "\\Update:" + "         " + (45*100)/100 + "%\n" + getBar(45, 100)); // Fin phase 3
+	print("Début de la phase 4/10 : filtrage des cellules");
 	Phase4();
+	print("Fin de la phase 4");
 	print(title, "\\Update:" + "         " + (50*100)/100 + "%\n" + getBar(50, 100)); // Fin phase 4
+	print("Début de la phase 5/10 : acquisition des coordonées des spots");
 	Phase5();
+	print("Fin de la phase 5");
 	print(title, "\\Update:" + "         " + (55*100)/100 + "%\n" + getBar(55, 100)); // Fin phase 5
+	print("Début de la phase 6/10 : filtrage des spots");
 	Phase6();
+	print("Fin de la phase 6");
 	print(title, "\\Update:" + "         " + (60*100)/100 + "%\n" + getBar(60, 100)); // Fin phase 6
+	print("Début de la phase 7/10 : comptage des spots in cell");
 	Phase7();
+	print("Fin de la phase 7");
 	print(title, "\\Update:" + "         " + (70*100)/100 + "%\n" + getBar(70, 100)); // Fin phase 7
+	print("Début de la phase 8/10 : Mesure intensitée des spots");
 	Mesure_intensite();
+	print("Fin de la phase Mesure intensitée des spots");
 	print(title, "\\Update:" + "         " + (80*100)/100 + "%\n" + getBar(80, 100)); // Fin phase de Mesure de l'intensitée
+	print("Début de la phase 9/10 : concaténation des résultats");
 	Concatenation_Resultat();
+	print("Fin de la phase de concaténation des résultats");
 	print(title, "\\Update:" + "         " + (90*100)/100 + "%\n" + getBar(90, 100)); // Fin phase de Concatenation des Resultats
 	selectWindow("bassin-filtered.tif");
 	close("\\Others");
@@ -599,6 +619,7 @@ function Poissons_zebre(){
 	setVoxelSize(width1, height1, depth1, "µm"); // Donne les dimentions des pixels pour calculer les bons volumes
 	// Bassin-filtered ouvert + table Results
 	if (lut) {
+		
 
 		Dialog.create("Quelle LUT ?");
 
@@ -612,19 +633,19 @@ function Poissons_zebre(){
 		}
 
 		if (res[0]) {
-			Dialog.create("Paramètres :");
+			Dialog.createNonBlocking("Paramètres :");
 			Dialog.addMessage("Sélection des paramètres :");
 			Dialog.addMessage("");
-			Dialog.addSlider("Intensité maximale attendue dans une cellule :", 50, 8000, 4154);
+			Dialog.addSlider("Intensité maximale attendue dans une cellule :", 0, 10000, 4154);
 			Dialog.show();
 			maxInt = Dialog.getNumber();
 		}
 	
 		if (res[1]) {
-			Dialog.create("Paramètres :");
+			Dialog.createNonBlocking("Paramètres :");
 			Dialog.addMessage("Sélection des paramètres :");
 			Dialog.addMessage("");
-			Dialog.addSlider("Nombre de spot par cellule :", 1, 50, 15);
+			Dialog.addSlider("Nombre de spot par cellule :", 1, 100, 15);
 			Dialog.show();
 			maxSpot = Dialog.getNumber();
 		}	
@@ -654,4 +675,5 @@ function Poissons_zebre(){
 	}
 	
 	print(title, "\\Update:" + "         " + (100*100)/100 + "%\n" + getBar(100, 100)); // Fin des Luts
+	print("Fin de la création des luts");
 }
