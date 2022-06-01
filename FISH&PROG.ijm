@@ -49,9 +49,9 @@ for (embi = 0; embi < l; embi++) {
 		nb = getFileList(chemin_image);		// Nb contient le nom des fichiers images
 
 		Array.sort(nb);		// On met l'image 488 en premier 
-
+		Array.show(nb);
 		if (lengthOf(nb) == 2) {  // Par précaution, il faut qu'il y ait seulement les images 488 et 561 dans le dossier 
-
+			close("nb");
 			Poissons_zebre();
 			
 			close("*");		// Fermeture des images
@@ -61,9 +61,15 @@ for (embi = 0; embi < l; embi++) {
 			selectWindow("Results_For_LUT.csv");
 			run("Close");
 		}
+
+		else if (lengthOf(nb) == 0){
+			showMessage("Les repertoires contenant les images sont vides !");
+			break;
+		}
 		
 		else {
 			showMessage("Le repertoire contenant les images doit contenir seulement 488 et 561 !");
+			break;
 		}
 	}
 }
@@ -123,7 +129,7 @@ function Phase3() {
 }
 
 function Phase4() {
-
+	ok=true;
 	// Filtrage des cellules en fonction de leur surface (les cellules de moins de 200 pixels sont retirées), de leur volume et de leur diamètre.
 	// in: image "ADD-catchment-basins" 32 bits issue de macro phase 3
 	// out : image "bassin-filtered" 16 bits et tableau des coordonnées des centroïdes des cellules et leur volume (result_1.csv)
@@ -177,7 +183,40 @@ function Phase4() {
 		}
 		row += 1;
 	}
-	print("Les cellules concervées un un volume compris entre maximum ", volumeMax, " et minimum ", volumeMin);
+	print("Les cellules concervées ont un volume compris entre maximum ", volumeMax, " et minimum ", volumeMin);
+	selectWindow("Results_1.csv");
+	if (Table.size ==0) {
+		okk=false;
+		while (ok==false){
+			showMessage("ErrorMacro, Result_1.csv  is empty, please, ajust the filter");
+			Dialog.createNonBlocking("Filtration du volume des cellules");
+	
+			Dialog.addMessage("Veuillez choisir le volume maximale d'une cellule :");
+			Dialog.addSlider("Volume maximale (pixel) : ", 1000, 200000, 80000);
+			volumeMax = Dialog.getNumber();
+	
+			Dialog.addMessage("Veuillez choisir le volume minimale d'une cellule :");
+			Dialog.addSlider("Volume minimale (pixel) : ", 1000, 200000, 10000);
+			volumeMin = Dialog.getNumber();
+			print("Volume maximum choisi : ", volumeMax, " et volume minimum choisi : ", volumeMin );
+	
+			Dialog.show();
+			row = 0;
+			nb_ligne = Table.size;
+			while (row < nb_ligne) { 
+				volume = Table.get("Volume", row);
+				if (volume < volumeMin || volume > volumeMax) {
+					Table.deleteRows(row, row); // Suppression des volumes à l'extérieur des bornes
+					row  -= 1;
+					nb_ligne -= 1;
+				}
+				row += 1;
+			}	
+			if(nb_ligne!=0){
+				ok=true;
+			}
+		}
+	}
 }
 
 function Phase5() {
@@ -208,7 +247,7 @@ function Phase5() {
 	// Make stack from image named with "Maxima"
 	run("Images to Stack", "method=[Copy (center)] name=Stack.tif title=Maxima use"); // Images to Stack
 	run("Options...", "iterations=1 count=1 black do=Dilate stack");
-	selectWindow("561.tif");
+	selectWindow(name);
 	close();
 }
 
@@ -275,13 +314,12 @@ function Mesure_intensite() {
 	
 	//setBatchMode(true);
 	open(chemin_image + nb[1]); // Ouverture de l'image avec le canal 561
-	rename("561.tif");
+	name=getTitle();
 	selectWindow("Results_2.csv");
 	nombre_ligne = Table.size;
 	run("Add...", "value=1 stack"); // On ajoute +1 à toutes les valeurs de pixel pour éviter d'en avoir un noir
-	
 	for (row = 0; row < nombre_ligne; row++) {
-	
+		
 		selectWindow("Results_2.csv");
 		// Prend les valeurs dans les colonnes X, Y et Z (Slice) à la ligne row
 		x = Table.get("X", row);
@@ -291,7 +329,7 @@ function Mesure_intensite() {
 		
 		if (Spot_in_cell != 0) { // Si les coordonnées du cluster sont dans une cellule
 
-			selectWindow("561.tif");
+			selectWindow(name);
 			setSlice(z);
 			valeur_pixel_cible = getValue(x, y);
 			
@@ -305,12 +343,13 @@ function Mesure_intensite() {
 				setAutoThreshold();
 				run("Set Measurements...", "integrated limit redirect=None decimal=3");
 				run("Measure");
-				close();
-				Valeur_intensite = getResult("IntDen", Table.getSelectionEnd); // Table.getSelectionEnd - Returns the index of the last selected row in the current table, or -1 if there is no selection
+				close();		
+				Valeur_intensite = getResult("IntDen", getValue("results.count")-1); // Table.getSelectionEnd - Returns the index of the last selected row in the current table, or -1 if there is no selection
 				selectWindow("Results_2.csv");
 				Table.set("Intensity", row, Valeur_intensite); // Ajoute la valeur "Intensity" au tableau
 				setForegroundColor(0, 0, 0);
 				run("Fill", "slice"); // Marque le cluster qui vient d'être mesurer en noir (0,0,0)
+				
 			}
 		
 			if (valeur_pixel_cible == 0) { // On a déjà compté ce cluster
@@ -324,6 +363,7 @@ function Mesure_intensite() {
 			Table.set("Intensity", row, NaN);
 		}
 	}
+		
 	selectWindow("bassin-filtered.tif");
 	close("\\Others");
 	close("Results");
@@ -377,7 +417,7 @@ function Concatenation_Resultat() {
 			Z_Centroidtt[row] = NaN;
 		}
 			
-		if (indexOfCellt[row] == Label[i]) { // Création du vecteur "Volumett,..." de même longueur que "indexOfCellt" avec les mêmes positions pour chaque index de cellules
+		else { // Création du vecteur "Volumett,..." de même longueur que "indexOfCellt" avec les mêmes positions pour chaque index de cellules
 			Volumett[row] 	  = Volumet[i];
 			X_Centroidtt[row] = X_Centroidt[i];
 			Y_Centroidtt[row] = Y_Centroidt[i];
@@ -451,18 +491,15 @@ function Concatenation_Resultat() {
 	}
 	
 	Array.show("Results_Finished_1.csv",Cell_Value, Volume, X_Centroid, Y_Centroid, Z_Centroid, SpotInCellsCount, X_Cluster, Y_Cluster, Z_Cluster, Intensity); // Construction du tableau final
-	
-	// Supprime les clusters sans cellule
-	Cell_Value = 0;
-	row = 0;
-	while (Cell_Value < 1) { 
-		Cell_Value = Table.get("Cell_Value", row);
-		if (Cell_Value == 0) {
-			Table.deleteRows(row, row);
-			row  = row - 1;
+	//filtre les cluster sans cellules + les cellules qui match pas avec le filtre volume
+	Table.rename("Results_Finished_1.csv", "Results");
+		for (i = 0; i < nResults; i++) {
+			if (isNaN(getResult("Volume", i))){
+				IJ.deleteRows(i, i);
+				i--;
+			}
 		}
-		row += 1;
-	}
+	IJ.renameResults("Results_Finished_1.csv");
 	
 	// Array for LUT
 	selectWindow("Results_Finished_1.csv");
@@ -475,9 +512,9 @@ function Concatenation_Resultat() {
 	SpotInCellsCount_LUT = newArray;
 	Intensity_LUT = newArray;
 	
-	for (row = 0; row < nb_ligne; row++) { 
+	/*for (row = 0; row < nb_ligne; row++) { 
 		Cell_Value_LUT[row] = 0;
-	}
+	}*/
 	Cell_Value_LUT[0] = Cell_Value[0];
 	SpotInCellsCount_LUT[0] = SpotInCellsCount[0];
 	Intensity_LUT[0] = Intensity[0];
@@ -488,16 +525,21 @@ function Concatenation_Resultat() {
 			Cell_Value_LUT[i] = Cell_Value[row];
 			SpotInCellsCount_LUT[i] = SpotInCellsCount[row];
 			Intensity_LUT[i] = Intensity[row];
+			if (isNaN(Intensity_LUT[i])) {
+				Intensity_LUT[i]=0;
+			}
 			i++;
 		}
 		
-		if (Cell_Value_LUT[i-1] == Cell_Value[row]) {
+		else {
 			Intensity_LUT[i-1] += Intensity[row];
 		}
 	}
+
+
 	
 	Array.show("Results_For_LUT.csv",Cell_Value_LUT, SpotInCellsCount_LUT, Intensity_LUT); // Construction du tableau pour les LUT   
-	
+	print(lengthOf(Cell_Value_LUT));
 	selectWindow("Results_1.csv");
 	run("Close");
 	selectWindow("Results_2.csv");
