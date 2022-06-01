@@ -51,7 +51,8 @@ for (embi = 0; embi < l; embi++) {
 		Array.sort(nb);		// On met l'image 488 en premier 
 		Array.show(nb);
 		if (lengthOf(nb) == 2) {  // Par précaution, il faut qu'il y ait seulement les images 488 et 561 dans le dossier 
-			close("nb");
+
+			close("nb");
 			Poissons_zebre();
 			
 			close("*");		// Fermeture des images
@@ -129,7 +130,7 @@ function Phase3() {
 }
 
 function Phase4() {
-	ok=true;
+
 	// Filtrage des cellules en fonction de leur surface (les cellules de moins de 200 pixels sont retirées), de leur volume et de leur diamètre.
 	// in: image "ADD-catchment-basins" 32 bits issue de macro phase 3
 	// out : image "bassin-filtered" 16 bits et tableau des coordonnées des centroïdes des cellules et leur volume (result_1.csv)
@@ -186,7 +187,7 @@ function Phase4() {
 	print("Les cellules concervées ont un volume compris entre maximum ", volumeMax, " et minimum ", volumeMin);
 	selectWindow("Results_1.csv");
 	if (Table.size ==0) {
-		okk=false;
+		ok=false;
 		while (ok==false){
 			showMessage("ErrorMacro, Result_1.csv  is empty, please, ajust the filter");
 			Dialog.createNonBlocking("Filtration du volume des cellules");
@@ -343,7 +344,8 @@ function Mesure_intensite() {
 				setAutoThreshold();
 				run("Set Measurements...", "integrated limit redirect=None decimal=3");
 				run("Measure");
-				close();		
+				close();
+		
 				Valeur_intensite = getResult("IntDen", getValue("results.count")-1); // Table.getSelectionEnd - Returns the index of the last selected row in the current table, or -1 if there is no selection
 				selectWindow("Results_2.csv");
 				Table.set("Intensity", row, Valeur_intensite); // Ajoute la valeur "Intensity" au tableau
@@ -514,7 +516,8 @@ function Concatenation_Resultat() {
 	
 	/*for (row = 0; row < nb_ligne; row++) { 
 		Cell_Value_LUT[row] = 0;
-	}*/
+	}
+*/
 	Cell_Value_LUT[0] = Cell_Value[0];
 	SpotInCellsCount_LUT[0] = SpotInCellsCount[0];
 	Intensity_LUT[0] = Intensity[0];
@@ -539,7 +542,7 @@ function Concatenation_Resultat() {
 
 	
 	Array.show("Results_For_LUT.csv",Cell_Value_LUT, SpotInCellsCount_LUT, Intensity_LUT); // Construction du tableau pour les LUT   
-	print(lengthOf(Cell_Value_LUT));
+	
 	selectWindow("Results_1.csv");
 	run("Close");
 	selectWindow("Results_2.csv");
