@@ -389,7 +389,7 @@ function Concatenation_Resultat() {
 			Z_Centroidtt[row] = NaN;
 		}
 			
-		else { // Création du vecteur "Volumett,..." de même longueur que "indexOfCellt" avec les mêmes positions pour chaque index de cellules
+		if (indexOfCellt[row] == Label[i]) { // Création du vecteur "Volumett,..." de même longueur que "indexOfCellt" avec les mêmes positions pour chaque index de cellules
 			Volumett[row] 	  = Volumet[i];
 			X_Centroidtt[row] = X_Centroidt[i];
 			Y_Centroidtt[row] = Y_Centroidt[i];
@@ -500,7 +500,7 @@ function Concatenation_Resultat() {
 			i++;
 		}
 		
-		else {
+		if (Cell_Value_LUT[i-1] == Cell_Value[row]){
 			Intensity_LUT[i-1] += Intensity[row];
 		}
 	}
