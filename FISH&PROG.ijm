@@ -165,59 +165,29 @@ function Phase4() {
 	
 	Dialog.addMessage("Veuillez choisir le volume maximale d'une cellule :");
 	Dialog.addSlider("Volume maximale (pixel) : ", 1000, 200000, 80000);
-	volumeMax = Dialog.getNumber();
 	
 	Dialog.addMessage("Veuillez choisir le volume minimale d'une cellule :");
 	Dialog.addSlider("Volume minimale (pixel) : ", 1000, 200000, 10000);
-	volumeMin = Dialog.getNumber();
-	print("Volume maximum choisi : ", volumeMax, " et volume minimum choisi : ", volumeMin );
-	
 	Dialog.show();
+	volumeMax = Dialog.getNumber();
+	volumeMin = Dialog.getNumber();
+	
+	print("Volume maximum choisi : " + volumeMax + " et volume minimum choisi : "+ volumeMin );
 	row = 0;
 	nb_ligne = Table.size;
 	while (row < nb_ligne) { 
 		volume = Table.get("Volume", row);
-		if (volume < volumeMin || volume > volumeMax) {
+		if ((volume < volumeMin) || (volume > volumeMax)) {
 			Table.deleteRows(row, row); // Suppression des volumes à l'extérieur des bornes
 			row  -= 1;
 			nb_ligne -= 1;
 		}
 		row += 1;
 	}
-	print("Les cellules concervées ont un volume compris entre maximum ", volumeMax, " et minimum ", volumeMin);
+	print("Les cellules concervées ont un volume compris entre maximum " + volumeMax + " et minimum " + volumeMin);
 	selectWindow("Results_1.csv");
-	if (Table.size ==0) {
-		ok=false;
-		while (ok==false){
-			showMessage("ErrorMacro, Result_1.csv  is empty, please, ajust the filter");
-			Dialog.createNonBlocking("Filtration du volume des cellules");
-	
-			Dialog.addMessage("Veuillez choisir le volume maximale d'une cellule :");
-			Dialog.addSlider("Volume maximale (pixel) : ", 1000, 200000, 80000);
-			volumeMax = Dialog.getNumber();
-	
-			Dialog.addMessage("Veuillez choisir le volume minimale d'une cellule :");
-			Dialog.addSlider("Volume minimale (pixel) : ", 1000, 200000, 10000);
-			volumeMin = Dialog.getNumber();
-			print("Volume maximum choisi : ", volumeMax, " et volume minimum choisi : ", volumeMin );
-	
-			Dialog.show();
-			row = 0;
-			nb_ligne = Table.size;
-			while (row < nb_ligne) { 
-				volume = Table.get("Volume", row);
-				if (volume < volumeMin || volume > volumeMax) {
-					Table.deleteRows(row, row); // Suppression des volumes à l'extérieur des bornes
-					row  -= 1;
-					nb_ligne -= 1;
-				}
-				row += 1;
-			}	
-			if(nb_ligne!=0){
-				ok=true;
-			}
-		}
-	}
+	if (Table.size == 0) 
+		exit("Toutes les cellules ont été supprimées");
 }
 
 function Phase5() {
@@ -313,9 +283,9 @@ function Mesure_intensite() {
 	// out : Results_2.csv avec les inensitées des clusters rajoutés
 	//		 (X_Cluster,Y_Cluster,Z_Cluster,CellNumber,Intensity)
 	
-	//setBatchMode(true);
+	setBatchMode(true);
 	open(chemin_image + nb[1]); // Ouverture de l'image avec le canal 561
-	name=getTitle();
+	name = getTitle();
 	selectWindow("Results_2.csv");
 	nombre_ligne = Table.size;
 	run("Add...", "value=1 stack"); // On ajoute +1 à toutes les valeurs de pixel pour éviter d'en avoir un noir
@@ -465,7 +435,7 @@ function Concatenation_Resultat() {
 		Z_Centroid[row]		  = Z_Centroidtt[Cell_Value[row]];
 	}
 	
-	// Rajout des lignes volume,X,Y,Z_centroid des cellules sans clusters
+	// Rajout des lignes volume,X,Y,Z_centroid des cellules sans clusters (intensity et coordonées cluster = NaN)
 	selectWindow("Results_1.csv"); 
 	nb_ligne_1 = Table.size;
 	
@@ -514,10 +484,6 @@ function Concatenation_Resultat() {
 	SpotInCellsCount_LUT = newArray;
 	Intensity_LUT = newArray;
 	
-	/*for (row = 0; row < nb_ligne; row++) { 
-		Cell_Value_LUT[row] = 0;
-	}
-*/
 	Cell_Value_LUT[0] = Cell_Value[0];
 	SpotInCellsCount_LUT[0] = SpotInCellsCount[0];
 	Intensity_LUT[0] = Intensity[0];
@@ -538,8 +504,6 @@ function Concatenation_Resultat() {
 			Intensity_LUT[i-1] += Intensity[row];
 		}
 	}
-
-
 	
 	Array.show("Results_For_LUT.csv",Cell_Value_LUT, SpotInCellsCount_LUT, Intensity_LUT); // Construction du tableau pour les LUT   
 	
@@ -661,11 +625,10 @@ function Poissons_zebre(){
 	selectWindow("bassin-filtered.tif");
 	close("\\Others");
 	
-	setVoxelSize(width1, height1, depth1, "µm"); // Donne les dimentions des pixels pour calculer les bons volumes
+	setVoxelSize(width1, height1, depth1, unit1); // Donne les dimentions des pixels pour calculer les bons volumes
 	// Bassin-filtered ouvert + table Results
 	if (lut) {
-		
-
+	
 		Dialog.create("Quelle LUT ?");
 
 		labels = newArray("INTENSITÉ","NOMBRE DE SPOT");
@@ -681,7 +644,7 @@ function Poissons_zebre(){
 			Dialog.createNonBlocking("Paramètres :");
 			Dialog.addMessage("Sélection des paramètres :");
 			Dialog.addMessage("");
-			Dialog.addSlider("Intensité maximale attendue dans une cellule :", 0, 10000, 4154);
+			Dialog.addSlider("Intensité maximale attendue dans une cellule :", 0, 100000000, 4154);
 			Dialog.show();
 			maxInt = Dialog.getNumber();
 		}
